@@ -76,26 +76,47 @@ function reorderItems(items: LayoutItem[], ids: string[], op: ReorderOp): Layout
 
 const DEPTH_RANK: Record<DepthTier, number> = { bg: 0, mg: 1, auto: 1, fg: 2 };
 
-/** 发给 LLM 的图层/透视说明，便于它理解前后关系 */
+const DEPTH_ZH: Record<string, string> = { fg: "前景", mg: "中景", bg: "背景", auto: "自动" };
+
+/**
+ * 发给 LLM 的图层说明。框坐标用画布绝对像素 xyxy（左上角原点，与图像同尺寸），
+ * 不能只写名称——否则模型会自己重摆框。
+ */
 function layoutContextHint(d: LayoutDraft): string {
   const lines: string[] = [];
-  const vis = d.items.filter((x) => !x.hidden);
-  if (vis.length) {
-    const zh: Record<string, string> = { fg: "前景", mg: "中景", bg: "背景", auto: "" };
-    const front = [...vis].reverse().map((it, i) => {
-      const nm = it.name || it.caption.slice(0, 40);
-      const tier = it.depth && it.depth !== "auto" ? `(${zh[it.depth]})` : "";
-      return `${i + 1}. ${nm}${tier}`;
+  if (d.items.length) {
+    lines.push(
+      `用户已绘制 ${d.items.length} 个框。坐标系：画布左上角为原点，x 向右、y 向下，绝对像素，` +
+        `bbox 为 xyxy [x1,y1,x2,y2]，画布 ${d.width}×${d.height}。` +
+        "必须严格保持数量、顺序、label 与 bbox，禁止移动、缩放或增删。",
+    );
+    d.items.forEach((it, i) => {
+      const [x1, y1, x2, y2] = it.bbox;
+      const z = i === d.items.length - 1 ? "最前" : i === 0 ? "最底" : "中间";
+      const bits = [
+        `${i + 1}. id=${it.id || "-"}`,
+        `z=${i + 1}/${d.items.length}（${z}）`,
+        `label=${it.label}`,
+        `bbox=[${Math.round(x1)}, ${Math.round(y1)}, ${Math.round(x2)}, ${Math.round(y2)}]`,
+        `尺寸=${Math.round(x2 - x1)}×${Math.round(y2 - y1)}`,
+      ];
+      if (it.name) bits.push(`名称=${it.name}`);
+      if (it.depth) bits.push(`景深=${DEPTH_ZH[it.depth] || it.depth}`);
+      if (it.caption) bits.push(`描述=${it.caption.replace(/\s+/g, " ").slice(0, 120)}`);
+      if (it.text) bits.push(`可见文字=${it.text.replace(/\s+/g, " ").slice(0, 120)}`);
+      if (it.hidden) bits.push("隐藏=是");
+      if (it.locked) bits.push("锁定=是");
+      lines.push(bits.join(" "));
     });
-    lines.push(`当前图层从前到后：${front.join("；")}`);
   }
   const p = d.perspective;
   if (p?.enabled) {
     const kind = p.mode === 1 ? "一点透视" : p.mode === 2 ? "两点透视" : "三点透视";
     lines.push(
-      `透视：${kind}，地平线在画面 ${Math.round((p.horizon_y / d.height) * 100)}% 高度，VP1 x=${Math.round(
-        (p.vp1_x / d.width) * 100,
-      )}%`,
+      `透视辅助（像素，与框同一坐标系，不得据此改框）：${kind}，地平线 y=${Math.round(p.horizon_y)}，` +
+        `VP1=(${Math.round(p.vp1_x)}, ${Math.round(p.horizon_y)})` +
+        (p.mode >= 2 ? `，VP2=(${Math.round(p.vp2_x)}, ${Math.round(p.horizon_y)})` : "") +
+        (p.mode === 3 ? `，VP3=(${Math.round(p.vp3_x)}, ${Math.round(p.vp3_y)})` : ""),
     );
   }
   return lines.join("\n");
@@ -347,6 +368,8 @@ export default function App() {
         height: layout.height,
         skill_id: activeSkills[mode],
         context_hint: mode === "layout" ? layoutContextHint(layout) : undefined,
+        boxes: mode === "layout" && layout.items.length ? layout.items : undefined,
+        perspective: mode === "layout" ? layout.perspective : undefined,
       });
       if (mode === "layout" && isLayoutDraft(r.draft)) {
         const nd = normalizeLayout({
@@ -1010,7 +1033,11 @@ export default function App() {
               <>
                 <div className="field">
                   <label>想法（用于增强）</label>
-                  <div className="field-hint">先写粗略想法，点下方按钮增强后会填入全局描述并生成框</div>
+                  <div className="field-hint">
+                    {layout.items.some((x) => !x.hidden)
+                      ? "已绘制的框会按像素坐标原样保留；增强只按各框的位置和标注填写内容。"
+                      : "先写粗略想法，点下方按钮增强后会填入全局描述并生成框"}
+                  </div>
                   <textarea
                     value={idea}
                     onChange={(e) => setIdea(e.target.value)}
@@ -1024,7 +1051,7 @@ export default function App() {
                     disabled={busy}
                     onClick={doEnhance}
                   >
-                    从想法生成 Layout
+                    {layout.items.some((x) => !x.hidden) ? "按画框生成 Layout" : "从想法生成 Layout"}
                   </button>
                 </div>
                 <div className="field">

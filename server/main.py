@@ -100,7 +100,9 @@ class EnhanceBody(BaseModel):
     height: int = 1024
     messages: Optional[list[dict]] = None
     skill_id: Optional[str] = None
-    context_hint: Optional[str] = None  # 图层顺序 / 透视说明（前端生成）
+    context_hint: Optional[str] = None  # 图层 / 透视说明；无 boxes 时的兼容文本
+    boxes: Optional[list[dict]] = None  # 用户画框。bbox 为画布绝对像素 xyxy（左上角原点）
+    perspective: Optional[dict] = None  # 透视辅助，坐标与框同一像素系（可在画布外）
 
 
 class ContextBody(BaseModel):
@@ -831,6 +833,19 @@ LAYER_RULES_HINT = (
     "请把远景/背景元素放在数组前面，前景主体放在后面。"
 )
 
+# 有用户画框时追加在系统提示之后，覆盖「请自行摆框 / 可调整」的默认行为。
+DRAWN_BOX_SYSTEM_ADDENDUM = (
+    "用户已经在画布上画好了框，这些框是硬约束，必须严格遵守。"
+    "坐标系：原点在画布左上角，x 向右、y 向下，单位为绝对像素，与图像/画布同尺寸；"
+    "bbox 格式为 xyxy [x1,y1,x2,y2]（左、上、右、下）。"
+    "禁止改用中心坐标、归一化 0–1、千分位或 yxyx。"
+    "输出 items 的数量、顺序、label、bbox 必须与用户列表完全一致，禁止移动、缩放、增删、合并、拆分或重排。"
+    "上面的「远景放前面」只解释当前顺序的含义，不要为了远近关系改已有框。"
+    "只根据用户想法书写 summary.caption，并按每个框的位置、大小、名称、已有描述和可见文字书写该框的 caption；"
+    "标注必须留在原框内，禁止把一个框的主体写进另一个框。"
+    "隐藏框原样保留。用户已填写的可见文字（text）保持原文。"
+)
+
 CONTEXT_META_HINT = (
     LAYER_RULES_HINT
     + "draft 中的 id/name/hidden/locked/depth/color 以及根级 perspective/prompt_options 是编辑器字段，"
@@ -1147,6 +1162,275 @@ def api_compile(body: CompileBody):
     return {"prompt": prompt, "mode": mode, "draft": draft}
 
 
+def _clamp_user_bbox(bbox: list, w: int, h: int) -> Optional[list[int]]:
+    """把用户框收进画布，尽量保持原位置和大小。无法形成正面积时返回 None。"""
+    if not (isinstance(bbox, list) and len(bbox) == 4):
+        return None
+    x1, y1, x2, y2 = (_as_int(v) for v in bbox)
+    if x2 < x1:
+        x1, x2 = x2, x1
+    if y2 < y1:
+        y1, y2 = y2, y1
+    x1 = max(0, min(x1, w - 1))
+    y1 = max(0, min(y1, h - 1))
+    x2 = max(x1 + 1, min(x2, w))
+    y2 = max(y1 + 1, min(y2, h))
+    if x2 <= x1 or y2 <= y1:
+        return None
+    return [x1, y1, x2, y2]
+
+
+def _coerce_drawn_boxes(raw: Any, width: int, height: int) -> list[dict]:
+    """规范化前端传来的画框。坐标保持画布绝对像素 xyxy，不换成中心坐标。"""
+    if not isinstance(raw, list):
+        return []
+    out: list[dict] = []
+    for it in raw:
+        if not isinstance(it, dict):
+            continue
+        bbox = _clamp_user_bbox(it.get("bbox"), width, height)
+        if bbox is None:
+            continue
+        label = it.get("label") if it.get("label") in ("object", "character", "text") else "object"
+        cap = it.get("caption") if isinstance(it.get("caption"), str) else ""
+        item: dict[str, Any] = {"label": label, "caption": cap.strip(), "bbox": bbox}
+        item.update(_sanitize_item_meta(it))
+        if isinstance(it.get("text"), str) and it["text"].strip():
+            item["text"] = it["text"].strip()
+        for key in ("tags", "palette"):
+            val = it.get(key)
+            if isinstance(val, list):
+                cleaned = [str(x).strip() for x in val if isinstance(x, str) and str(x).strip()]
+                if cleaned:
+                    item[key] = cleaned
+        out.append(item)
+    return out
+
+
+def _perspective_constraint(p: Any, width: int, height: int) -> Optional[dict]:
+    if not isinstance(p, dict) or not p.get("enabled"):
+        return None
+    mode = p.get("mode") if p.get("mode") in (1, 2, 3) else 1
+
+    def n(key: str, default: float) -> int:
+        try:
+            if isinstance(p.get(key), bool):
+                return int(round(default))
+            return int(round(float(p.get(key))))
+        except (TypeError, ValueError):
+            return int(round(default))
+
+    hy = n("horizon_y", height / 2)
+    out: dict[str, Any] = {
+        "mode": mode,
+        "kind": {1: "一点透视", 2: "两点透视", 3: "三点透视"}[mode],
+        "horizon_y": hy,
+        "vp1": [n("vp1_x", width / 2), hy],
+    }
+    if mode >= 2:
+        out["vp2"] = [n("vp2_x", width * 1.4), hy]
+    if mode == 3:
+        out["vp3"] = [n("vp3_x", width / 2), n("vp3_y", height * 2.5)]
+    out["note"] = "与框同一像素坐标系（可在画布外）。只用于描写机位，禁止据此移动框。"
+    return out
+
+
+def format_drawn_box_prompt(boxes: list[dict], width: int, height: int, perspective: Any = None) -> str:
+    """模型必须看到的画框清单。bbox 为画布左上角原点的绝对像素 xyxy。"""
+    rows: list[dict] = []
+    n = len(boxes)
+    for i, it in enumerate(boxes):
+        x1, y1, x2, y2 = it["bbox"]
+        row: dict[str, Any] = {
+            "index": i,
+            "z_order": i,
+            "z_note": "最前（遮挡更早的框）" if i == n - 1 else ("最底（最远）" if i == 0 else "中间层"),
+            "id": it.get("id"),
+            "label": it["label"],
+            "bbox": [x1, y1, x2, y2],
+            "bbox_format": "xyxy",
+            "size": [x2 - x1, y2 - y1],
+        }
+        if it.get("name"):
+            row["name"] = it["name"]
+        if it.get("depth"):
+            row["depth"] = it["depth"]
+        if it.get("caption"):
+            row["caption"] = it["caption"]
+        if it.get("text"):
+            row["text"] = it["text"]
+        if it.get("tags"):
+            row["tags"] = it["tags"]
+        if it.get("hidden"):
+            row["hidden"] = True
+        if it.get("locked"):
+            row["locked"] = True
+        rows.append(row)
+    spec: dict[str, Any] = {
+        "coord_space": "abs",
+        "origin": "top-left",
+        "x_axis": "right",
+        "y_axis": "down",
+        "unit": "pixel",
+        "bbox_format": "xyxy",
+        "canvas_width": width,
+        "canvas_height": height,
+        "z_order": "index/z_order 越大越靠前，会遮挡更小的 index",
+        "boxes": rows,
+    }
+    persp = _perspective_constraint(perspective, width, height)
+    if persp:
+        spec["perspective"] = persp
+    return (
+        "用户已在画布上绘制以下区域。生成布局时必须严格使用这些框，不得忽略或自行重摆。\n"
+        "硬性约束：\n"
+        "- 坐标系与图像一致：原点在画布左上角，x 向右、y 向下，绝对像素；"
+        f"画布 {width}×{height}。\n"
+        "- bbox 为 [x1, y1, x2, y2]（左、上、右、下）。不要换成中心坐标、归一化坐标或 yxyx。\n"
+        "- 输出 items 与 boxes 逐条对应：数量、顺序、id（若输出）、label、bbox 数字必须原样复制。\n"
+        "- 禁止新增、删除、合并、拆分、重排、移动或缩放任何框。\n"
+        "- 只根据用户想法填写 summary.caption，并按该框的位置、大小和已有 name/caption/text/tags 书写 caption。\n"
+        "- 已有标注是内容约束：主体必须留在原框，禁止串到其他框。隐藏框的 caption 与 bbox 原样保留。\n"
+        "- 用户已给出的 text 必须原样保留。\n"
+        "画框数据（JSON，以此为准）：\n"
+        + json.dumps(spec, ensure_ascii=False, indent=2)
+    )
+
+
+def layout_enhance_system(base: str, width: int, height: int, has_boxes: bool) -> str:
+    system = base + f"\n画布尺寸: {width}x{height}\n" + LAYER_RULES_HINT
+    if has_boxes:
+        system += "\n" + DRAWN_BOX_SYSTEM_ADDENDUM
+    return system
+
+
+def build_layout_enhance_user(
+    idea: str,
+    width: int,
+    height: int,
+    boxes: Any = None,
+    perspective: Any = None,
+    context_hint: str | None = None,
+) -> tuple[str, list[dict]]:
+    """返回 (user 消息, 规范化后的画框)。有画框时提示词含坐标且要求严格遵守。"""
+    user = f"用户想法:\n{idea}\n\n请输出 Layout JSON，width={width}, height={height}。"
+    drawn = _coerce_drawn_boxes(boxes, width, height)
+    hint = (context_hint or "").strip()
+    if drawn:
+        user += "\n\n" + format_drawn_box_prompt(drawn, width, height, perspective)
+        return user, drawn
+    if hint and ("bbox=" in hint or "必须严格" in hint):
+        # 兼容只通过文本带上坐标的客户端：不再标成「可调整」。
+        user += "\n\n以下画框约束必须严格遵守（坐标为画布绝对像素 xyxy）：\n" + hint[:12000]
+    elif hint:
+        user += f"\n\n编辑器当前状态（供参考，可按想法调整）：\n{hint[:2000]}"
+    return user, drawn
+
+
+_PLACEHOLDER_CAP = re.compile(r"^(?:区域|region)\s*\d+$", re.IGNORECASE)
+
+
+def _is_placeholder_caption(cap: str) -> bool:
+    text = (cap or "").strip()
+    return not text or bool(_PLACEHOLDER_CAP.match(text))
+
+
+def _merge_box_caption(user_cap: str, model_cap: str, *, hidden: bool) -> str:
+    """隐藏框保留用户原文。占位描述交给模型；用户写过的标注不能被模型丢掉。"""
+    user_cap = (user_cap or "").strip()
+    model_cap = (model_cap or "").strip()
+    if hidden or not model_cap:
+        return user_cap
+    if _is_placeholder_caption(user_cap) or user_cap in model_cap:
+        return model_cap
+    joiner = "。" if _is_cjk(user_cap) else ". "
+    return f"{user_cap}{joiner}{model_cap}"
+
+
+def pin_drawn_boxes(draft: dict, boxes: Any, width: int, height: int) -> dict:
+    """把模型结果的几何锁回用户画框。可见框可以改写 caption，但坐标与标注仍以用户框为准。"""
+    drawn = _coerce_drawn_boxes(boxes, width, height)
+    if not drawn or not isinstance(draft, dict):
+        return draft
+    model_items = draft.get("items") if isinstance(draft.get("items"), list) else []
+    by_id: dict[str, dict] = {}
+    for it in model_items:
+        if isinstance(it, dict) and isinstance(it.get("id"), str) and it["id"].strip():
+            by_id[it["id"].strip()] = it
+    src_ids = [b["id"] for b in drawn if isinstance(b.get("id"), str) and b["id"]]
+    use_id = (
+        len(src_ids) == len(drawn)
+        and len(set(src_ids)) == len(src_ids)
+        and set(src_ids) <= set(by_id)
+    )
+    pinned: list[dict] = []
+    for i, src in enumerate(drawn):
+        model: Any = None
+        if use_id:
+            model = by_id.get(src.get("id"))
+        elif i < len(model_items) and isinstance(model_items[i], dict):
+            model = model_items[i]
+        model_cap = ""
+        if isinstance(model, dict) and isinstance(model.get("caption"), str):
+            model_cap = model["caption"]
+        caption = _merge_box_caption(src.get("caption") or "", model_cap, hidden=bool(src.get("hidden")))
+        if not caption:
+            caption = f"Region {i + 1}"
+        item: dict[str, Any] = {
+            "label": src["label"],
+            "caption": caption,
+            "bbox": list(src["bbox"]),
+        }
+        for key in ("id", "name", "hidden", "locked", "depth", "color"):
+            if key in src:
+                item[key] = src[key]
+        if src.get("text"):
+            item["text"] = src["text"]
+        elif src["label"] == "text":
+            model_text = model.get("text") if isinstance(model, dict) else None
+            if isinstance(model_text, str) and model_text.strip():
+                item["text"] = model_text.strip()
+            else:
+                item["text"] = caption
+        for key in ("tags", "palette"):
+            if src.get(key):
+                item[key] = list(src[key])
+            elif isinstance(model, dict) and isinstance(model.get(key), list):
+                cleaned = [str(x).strip() for x in model[key] if isinstance(x, str) and str(x).strip()]
+                if cleaned:
+                    item[key] = cleaned
+        pinned.append(item)
+    out = dict(draft)
+    out["width"] = width
+    out["height"] = height
+    out["bbox_coord_space"] = "abs"
+    out["bbox_format"] = "xyxy"
+    out["items"] = pinned
+    return out
+
+
+def _layout_from_drawn_boxes(idea: str, width: int, height: int, boxes: list[dict]) -> dict:
+    """无 API Key 时保留用户画框，不再换成居中大框。"""
+    items = []
+    for i, src in enumerate(boxes):
+        cap = (src.get("caption") or "").strip() or (src.get("name") or "").strip() or f"Region {i + 1}"
+        item = {"label": src["label"], "caption": cap, "bbox": list(src["bbox"])}
+        for key in ("id", "name", "hidden", "locked", "depth", "color", "text", "tags", "palette"):
+            if key in src and src[key] not in (None, "", []):
+                item[key] = src[key]
+        if item["label"] == "text" and "text" not in item:
+            item["text"] = cap
+        items.append(item)
+    return {
+        "width": width,
+        "height": height,
+        "bbox_coord_space": "abs",
+        "bbox_format": "xyxy",
+        "summary": {"caption": idea.strip() or "A composed image.", "canvas": "single"},
+        "items": items,
+    }
+
+
 @app.post("/api/enhance")
 async def api_enhance(body: EnhanceBody):
     idea = (body.idea or "").strip()
@@ -1155,13 +1439,16 @@ async def api_enhance(body: EnhanceBody):
     w, h = _ensure_wh(body.width, body.height)
     s = load_settings()
     has_key = bool((s.get("api_key") or "").strip())
+    drawn = _coerce_drawn_boxes(body.boxes, w, h) if body.mode == "layout" else []
 
     if not has_key:
         if body.mode == "layout":
-            draft = _fallback_layout(idea, w, h)
+            draft = _layout_from_drawn_boxes(idea, w, h, drawn) if drawn else _fallback_layout(idea, w, h)
         else:
             draft = _fallback_caption(idea)
         draft = _sanitize_draft(draft, mode=body.mode, width=w, height=h)
+        if drawn:
+            draft = pin_drawn_boxes(draft, drawn, w, h)
         prompt, _cerr = _compile_safe(draft)
         return {
             "draft": draft,
@@ -1174,11 +1461,10 @@ async def api_enhance(body: EnhanceBody):
     kind = "layout" if body.mode == "layout" else "caption"
     skill = resolve_skill(kind, body.skill_id)
     if body.mode == "layout":
-        system = skill["system_prompt"] + f"\n画布尺寸: {w}x{h}\n" + LAYER_RULES_HINT
-        user = f"用户想法:\n{idea}\n\n请输出 Layout JSON，width={w}, height={h}。"
-        hint = (body.context_hint or "").strip()
-        if hint:
-            user += f"\n\n编辑器当前状态（供参考，可按想法调整）：\n{hint[:2000]}"
+        system = layout_enhance_system(skill["system_prompt"], w, h, bool(drawn))
+        user, drawn = build_layout_enhance_user(
+            idea, w, h, body.boxes, body.perspective, body.context_hint
+        )
     else:
         system = skill["system_prompt"]
         user = f"用户想法:\n{idea}"
@@ -1195,6 +1481,8 @@ async def api_enhance(body: EnhanceBody):
         raise HTTPException(status_code=502, detail=f"模型返回无法解析为 JSON: {e}\n原文: {raw[:800]}") from e
 
     draft = _sanitize_draft(draft, mode=body.mode, width=w, height=h)
+    if drawn:
+        draft = pin_drawn_boxes(draft, drawn, w, h)
     prompt, cerr = _compile_safe(draft)
     out = {"draft": draft, "mode": body.mode, "degraded": False, "raw": raw[:2000], "prompt": prompt}
     if cerr:

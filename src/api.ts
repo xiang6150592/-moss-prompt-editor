@@ -1,4 +1,13 @@
-import type { AppSettings, Draft, HistoryRecord, Skill, SkillKind, SkillsState } from "./types";
+import type {
+  AppSettings,
+  Draft,
+  HistoryRecord,
+  LayoutItem,
+  PerspectiveSettings,
+  Skill,
+  SkillKind,
+  SkillsState,
+} from "./types";
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init);
@@ -31,6 +40,9 @@ export function enhance(body: {
   height?: number;
   skill_id?: string;
   context_hint?: string;
+  /** 用户画框。bbox 为画布绝对像素 xyxy，与图像同坐标系。 */
+  boxes?: LayoutItem[];
+  perspective?: PerspectiveSettings;
 }) {
   return req<{
     draft: Draft;
