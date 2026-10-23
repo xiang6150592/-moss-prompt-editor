@@ -1,31 +1,54 @@
 export type ItemLabel = "object" | "character" | "text";
 export type CanvasKind = "single" | "multi_panel" | "collage";
-export type EditorMode = "caption" | "layout";
-
+export type DocKind = "layout" | "caption";
 export type DepthTier = "auto" | "fg" | "mg" | "bg";
+export type Anchor = "world" | "screen" | "backdrop";
+export type BBox = [number, number, number, number];
+
+/** 3D 体块：远近（1 = 基准深度，越大越远）、厚度（相对框宽）、朝向（度，0 = 正对初始机位） */
+export interface Body {
+  z: number;
+  thickness: number;
+  yaw: number;
+  anchor: Anchor;
+}
 
 export interface LayoutItem {
   label: ItemLabel;
   caption: string;
-  bbox: [number, number, number, number];
+  bbox: BBox;
   text?: string;
   tags?: string[];
   palette?: string[];
-  // ---- 编辑器元数据（编译前由后端剥离，不进入官方 schema）----
-  id?: string;
+  // ---- 编辑器元数据（编译时剥离）----
+  id: string;
   name?: string;
   hidden?: boolean;
   locked?: boolean;
   depth?: DepthTier;
   color?: number;
+  body?: Body;
+  /** 成组：同一个组 id 的框视为一体（移动、镜头调度时不分离） */
+  group?: string;
 }
 
-export type PerspectiveMode = 1 | 2 | 3;
+export interface Camera {
+  enabled: boolean;
+  orbit: number;
+  pitch: number;
+  roll: number;
+  distance: number;
+  fov: number;
+  pan_x: number;
+  pan_y: number;
+  pan_z: number;
+}
 
-/** 透视设置；坐标均为画布像素（可在画布外） */
+export type CameraKey = Exclude<keyof Camera, "enabled">;
+
 export interface PerspectiveSettings {
   enabled: boolean;
-  mode: PerspectiveMode;
+  mode: 1 | 2 | 3;
   horizon_y: number;
   vp1_x: number;
   vp2_x: number;
@@ -39,6 +62,7 @@ export interface PerspectiveSettings {
 export interface PromptOptions {
   depth: boolean;
   perspective: boolean;
+  camera: boolean;
 }
 
 export interface LayoutSummary {
@@ -57,39 +81,125 @@ export interface LayoutDraft {
   items: LayoutItem[];
   perspective?: PerspectiveSettings;
   prompt_options?: PromptOptions;
+  camera?: Camera;
 }
 
 export interface CaptionDraft {
   caption: string;
 }
 
-export type Draft = LayoutDraft | CaptionDraft;
-
-export function isLayoutDraft(d: Draft): d is LayoutDraft {
-  return "items" in d && Array.isArray((d as LayoutDraft).items);
+export interface Doc {
+  kind: DocKind;
+  layout: LayoutDraft;
+  caption: CaptionDraft;
 }
 
-export interface ResolutionTemplate {
+export interface Page {
   id: string;
+  series_id: string;
   name: string;
-  width: number;
-  height: number;
-}
-
-export interface HistoryRecord {
-  id: string;
-  title: string;
-  mode: EditorMode;
-  idea: string;
-  draft: Draft;
-  prompt: string;
+  sort: number;
+  doc: Doc;
   created_at?: string;
   updated_at?: string;
 }
 
-export interface ChatMessage {
-  role: "user" | "assistant" | "system";
+export interface Series {
+  id: string;
+  name: string;
+  sort: number;
+  pages: Page[];
+}
+
+export interface Revision {
+  id: string;
+  page_id: string;
+  source: string;
+  summary: string;
+  created_at: string;
+  doc?: Doc;
+}
+
+export interface Session {
+  id: string;
+  series_id: string;
+  title: string;
+  closed: number;
+  summary: string;
+  protocol: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Step {
+  name: string;
+  label?: string;
+  brief?: string;
+  ok: boolean;
+  result?: string;
+  created?: boolean;
+  page_id?: string;
+}
+
+export type ProposalStatus = "pending" | "accepted" | "rejected" | "partial";
+
+export interface Proposal {
+  page_id: string;
+  page_name: string;
+  base: Doc;
+  proposed: Doc;
+  summary: string[];
+  status: ProposalStatus;
+  applied?: Doc;
+}
+
+export interface Ask {
+  question: string;
+  options: string[];
+  multi: boolean;
+}
+
+export interface MessageMeta {
+  page_id?: string;
+  selection?: string[];
+  skill_ids?: string[];
+  attachments?: string[];
+  quick?: string | null;
+  steps?: Step[];
+  proposals?: Proposal[];
+  ask?: Ask | null;
+  model?: string;
+  error?: string | null;
+  stopped?: boolean;
+}
+
+export interface Message {
+  id: string;
+  session_id: string;
+  seq: number;
+  role: "user" | "assistant";
   content: string;
+  meta: MessageMeta;
+  created_at?: string;
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  mime: string;
+  width?: number | null;
+  height?: number | null;
+}
+
+export interface ArchiveItem {
+  id: string;
+  title: string;
+  category: string;
+  kind: DocKind;
+  doc: Doc;
+  prompt: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AppSettings {
@@ -98,38 +208,12 @@ export interface AppSettings {
   api_key_set: boolean;
   model: string;
   vision_model: string;
+  fallback_models: string;
+  temperature: number;
+  agent_protocol: "auto" | "tools" | "tags";
+  context_turns: number;
   prompt_prefix: string;
   negative_prompt: string;
-}
-
-export const DEFAULT_TEMPLATES: ResolutionTemplate[] = [
-  { id: "sq", name: "1024×1024 方形", width: 1024, height: 1024 },
-  { id: "land", name: "1280×768 横图", width: 1280, height: 768 },
-  { id: "camp", name: "1536×1024 横幅", width: 1536, height: 1024 },
-  { id: "port", name: "1024×1536 竖图", width: 1024, height: 1536 },
-  { id: "hd", name: "1920×1088 宽屏", width: 1920, height: 1088 },
-  { id: "sq2", name: "768×768 小方", width: 768, height: 768 },
-];
-
-export function emptyLayout(width = 1024, height = 1024): LayoutDraft {
-  return {
-    width,
-    height,
-    bbox_coord_space: "abs",
-    bbox_format: "xyxy",
-    summary: { caption: "", canvas: "single" },
-    items: [],
-    perspective: defaultPerspective(width, height),
-    prompt_options: { ...DEFAULT_PROMPT_OPTIONS },
-  };
-}
-
-export function emptyCaption(): CaptionDraft {
-  return { caption: "" };
-}
-
-export function snap16(n: number): number {
-  return Math.max(16, Math.round(n / 16) * 16);
 }
 
 export type SkillKind = "caption" | "layout" | "context";
@@ -149,100 +233,29 @@ export interface SkillsState {
   active: Record<SkillKind, string>;
 }
 
-export const BOX_COLORS = 6;
-
-export function newItemId(): string {
-  return `b${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+export interface CompileResult {
+  prompt: string;
+  checks: string[];
+  prefix: string;
+  negative: string;
 }
 
-export function defaultPerspective(width: number, height: number): PerspectiveSettings {
-  return {
-    enabled: false,
-    mode: 1,
-    horizon_y: Math.round(height * 0.42),
-    vp1_x: Math.round(width / 2),
-    vp2_x: Math.round(width * 1.4),
-    vp3_x: Math.round(width / 2),
-    vp3_y: Math.round(height * 2.5),
-    show_grid: false,
-    auto_scale: false,
-    source: "manual",
-  };
+export interface ResolutionTemplate {
+  name: string;
+  width: number;
+  height: number;
 }
 
-export const DEFAULT_PROMPT_OPTIONS: PromptOptions = { depth: true, perspective: false };
+export const RESOLUTIONS: ResolutionTemplate[] = [
+  { name: "方形", width: 1024, height: 1024 },
+  { name: "竖图 2:3", width: 1024, height: 1536 },
+  { name: "横幅 3:2", width: 1536, height: 1024 },
+  { name: "横图 5:3", width: 1280, height: 768 },
+  { name: "宽屏 16:9", width: 1920, height: 1088 },
+  { name: "竖屏 9:16", width: 1088, height: 1920 },
+  { name: "小方", width: 768, height: 768 },
+];
 
-function num(v: unknown, d: number): number {
-  return typeof v === "number" && Number.isFinite(v) ? v : d;
-}
-
-/** 补齐旧草稿缺失的字段（id/颜色/透视/选项），保持向后兼容 */
-export function normalizeLayout(d: LayoutDraft): LayoutDraft {
-  const used = new Set<string>();
-  const items = (d.items || []).map((it, i) => {
-    let id = typeof it.id === "string" && it.id ? it.id : newItemId();
-    while (used.has(id)) id = newItemId();
-    used.add(id);
-    const depth: DepthTier =
-      it.depth === "fg" || it.depth === "mg" || it.depth === "bg" ? it.depth : "auto";
-    return {
-      ...it,
-      id,
-      depth,
-      hidden: !!it.hidden,
-      locked: !!it.locked,
-      color: typeof it.color === "number" ? ((it.color % BOX_COLORS) + BOX_COLORS) % BOX_COLORS : i % BOX_COLORS,
-    };
-  });
-  const dp = defaultPerspective(d.width, d.height);
-  const p = (d.perspective || {}) as Partial<PerspectiveSettings>;
-  const mode = p.mode === 2 || p.mode === 3 ? p.mode : 1;
-  const perspective: PerspectiveSettings = {
-    enabled: !!p.enabled,
-    mode,
-    horizon_y: num(p.horizon_y, dp.horizon_y),
-    vp1_x: num(p.vp1_x, dp.vp1_x),
-    vp2_x: num(p.vp2_x, dp.vp2_x),
-    vp3_x: num(p.vp3_x, dp.vp3_x),
-    vp3_y: num(p.vp3_y, dp.vp3_y),
-    show_grid: !!p.show_grid,
-    auto_scale: !!p.auto_scale,
-    source: p.source === "boxes" || p.source === "image" ? p.source : "manual",
-  };
-  const po = (d.prompt_options || {}) as Partial<PromptOptions>;
-  return {
-    ...d,
-    items,
-    perspective,
-    prompt_options: {
-      depth: po.depth !== false,
-      perspective: !!po.perspective,
-    },
-  };
-}
-
-/** AI 改写后的草稿常会丢掉编辑器字段：按 id / 下标把元数据合并回来 */
-export function mergeEditorMeta(prev: LayoutDraft, next: LayoutDraft): LayoutDraft {
-  const byId = new Map(prev.items.filter((x) => x.id).map((x) => [x.id as string, x]));
-  const sameLen = prev.items.length === next.items.length;
-  const items = next.items.map((it, i) => {
-    const src = (it.id && byId.get(it.id)) || (sameLen ? prev.items[i] : undefined);
-    if (!src) return it;
-    return {
-      ...it,
-      id: it.id || src.id,
-      name: it.name ?? src.name,
-      hidden: it.hidden ?? src.hidden,
-      locked: it.locked ?? src.locked,
-      depth: it.depth ?? src.depth,
-      color: it.color ?? src.color,
-    };
-  });
-  const sameSize = prev.width === next.width && prev.height === next.height;
-  return normalizeLayout({
-    ...next,
-    items,
-    perspective: next.perspective || (sameSize ? prev.perspective : undefined),
-    prompt_options: next.prompt_options || prev.prompt_options,
-  });
-}
+export const LABEL_TEXT: Record<ItemLabel, string> = { object: "物体", character: "角色", text: "文字" };
+export const ANCHOR_TEXT: Record<Anchor, string> = { world: "场景", screen: "贴屏", backdrop: "远景板" };
+export const DEPTH_TEXT: Record<DepthTier, string> = { auto: "自动", fg: "前景", mg: "中景", bg: "背景" };

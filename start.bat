@@ -1,102 +1,114 @@
 @echo off
+rem MOSS Prompt Studio - desktop launcher
+rem   start.bat            open the desktop window
+rem   start.bat browser    use the system browser instead of a native window
+rem   start.bat debug      keep console + WebView devtools (same as start-debug.bat)
+rem   start.bat rebuild    rebuild the frontend (needs Node.js)
+rem   start.bat fixvenv    recreate .venv
 cd /d "%~dp0"
 setlocal EnableDelayedExpansion
-set PORT=8787
-set FORCE_REBUILD=
-set FIX_VENV=
+set "FORCE_REBUILD="
+set "FIX_VENV="
+set "MODE=window"
+for %%A in (%*) do (
+  if /I "%%~A"=="rebuild" set "FORCE_REBUILD=1"
+  if /I "%%~A"=="fixvenv" set "FIX_VENV=1"
+  if /I "%%~A"=="browser" set "MODE=browser"
+  if /I "%%~A"=="debug" set "MODE=debug"
+)
+set "REQ=requirements.txt"
 
-if /I "%~1"=="rebuild" set FORCE_REBUILD=1
-if /I "%~1"=="fixvenv" set FIX_VENV=1
-if /I "%~2"=="rebuild" set FORCE_REBUILD=1
-if /I "%~2"=="fixvenv" set FIX_VENV=1
-if not "%~1"=="" if /I not "%~1"=="rebuild" if /I not "%~1"=="fixvenv" set PORT=%~1
-
-set PYLAUNCHER=
-py -3.11 -c "import sys" >nul 2>&1
-if %ERRORLEVEL%==0 set PYLAUNCHER=py -3.11
-if "%PYLAUNCHER%"=="" py -3.12 -c "import sys" >nul 2>&1
-if "%PYLAUNCHER%"=="" if %ERRORLEVEL%==0 set PYLAUNCHER=py -3.12
-if "%PYLAUNCHER%"=="" py -3.13 -c "import sys" >nul 2>&1
-if "%PYLAUNCHER%"=="" if %ERRORLEVEL%==0 set PYLAUNCHER=py -3.13
-
-if "%PYLAUNCHER%"=="" (
-  echo Need Python 3.11-3.13. Python 3.14 is not supported yet.
-  echo Install 3.11 or run: py -0p
+rem ---- pick Python 3.11-3.13 (3.14 not supported by pywebview/pythonnet yet) ----
+set "PY="
+for %%V in (3.12 3.11 3.13) do (
+  if not defined PY (
+    py -%%V -c "import sys" >nul 2>&1
+    if !errorlevel! equ 0 set "PY=py -%%V"
+  )
+)
+if not defined PY (
+  python -c "import sys; sys.exit(0 if (3,11)<=sys.version_info[:2]<=(3,13) else 1)" >nul 2>&1
+  if !errorlevel! equ 0 set "PY=python"
+)
+if not defined PY (
+  echo [x] Need Python 3.11 - 3.13 ^(64-bit^). Check installed versions with: py -0p
   pause
   exit /b 1
 )
 
-echo Using: %PYLAUNCHER%
-%PYLAUNCHER% -c "import sys; print(sys.version)"
-
-if "%FIX_VENV%"=="1" (
-  echo Force recreating .venv ...
-  if exist ".venv\" rmdir /s /q ".venv"
+if "%FIX_VENV%"=="1" if exist ".venv\" (
+  echo [i] Recreating .venv ...
+  rmdir /s /q ".venv"
 )
-
 if exist ".venv\Scripts\python.exe" (
-  ".venv\Scripts\python.exe" -c "import sys; print(sys.executable)" >nul 2>&1
+  ".venv\Scripts\python.exe" -c "import sys" >nul 2>&1
   if errorlevel 1 (
-    echo Venv python broken ^(Unable to create process / bad path^). Recreating...
+    echo [i] .venv is broken, recreating ...
     rmdir /s /q ".venv"
   )
 )
-
 if not exist ".venv\Scripts\python.exe" (
-  echo Creating venv...
-  %PYLAUNCHER% -m venv .venv
+  echo [i] Creating .venv with %PY% ...
+  %PY% -m venv .venv
   if errorlevel 1 (
-    echo Failed to create venv.
+    echo [x] Failed to create venv.
     pause
     exit /b 1
   )
+  if exist ".venv\.req-stamp" del /q ".venv\.req-stamp"
+)
+set "VPY=.venv\Scripts\python.exe"
+
+rem ---- install deps only when %REQ% changed ----
+set "NEED_PIP=1"
+if exist ".venv\.req-stamp" (
+  fc /b "%REQ%" ".venv\.req-stamp" >nul 2>&1
+  if !errorlevel! equ 0 set "NEED_PIP=0"
+)
+if "!NEED_PIP!"=="1" (
+  echo [i] Installing Python packages from %REQ% ...
+  "%VPY%" -m pip install -q -U pip
+  "%VPY%" -m pip install -q -r "%REQ%"
+  if errorlevel 1 (
+    echo [x] pip install failed. Check network / proxy, or run: %~nx0 fixvenv
+    pause
+    exit /b 1
+  )
+  copy /y "%REQ%" ".venv\.req-stamp" >nul
 )
 
-echo Installing Python deps...
-".venv\Scripts\python.exe" -m pip install -q -U pip
-if errorlevel 1 (
-  echo pip upgrade failed. Try: start.bat fixvenv
-  pause
-  exit /b 1
-)
-".venv\Scripts\python.exe" -m pip install -q -r server\requirements.txt
-if errorlevel 1 (
-  echo pip install failed. Try: start.bat fixvenv
-  pause
-  exit /b 1
-)
-
-set NEED_BUILD=0
-if "%FORCE_REBUILD%"=="1" set NEED_BUILD=1
-if not exist "dist\index.html" set NEED_BUILD=1
-
-if "%NEED_BUILD%"=="1" (
+rem ---- frontend: dist\ is shipped prebuilt; rebuild only if missing or asked ----
+set "NEED_BUILD=0"
+if "%FORCE_REBUILD%"=="1" set "NEED_BUILD=1"
+if not exist "dist\index.html" set "NEED_BUILD=1"
+if "!NEED_BUILD!"=="1" (
   where npm >nul 2>&1
   if errorlevel 1 (
-    echo dist missing/outdated and npm not found.
+    echo [x] dist\ missing and npm not found. Install Node.js 18+ first.
     pause
     exit /b 1
   )
   if not exist "node_modules\" call npm install
-  echo Building frontend...
+  echo [i] Building frontend ...
   call npm run build
   if errorlevel 1 (
-    echo npm build failed.
+    echo [x] npm run build failed.
     pause
     exit /b 1
   )
 )
 
-echo.
-echo Open http://127.0.0.1:%PORT%
-echo Press Ctrl+C to stop.
-echo Tip: start.bat rebuild   to force rebuild frontend
-echo Tip: start.bat fixvenv   if Unable to create process / ???? path
-echo.
-REM Never call uvicorn.exe - its launcher embeds a broken non-ASCII path.
-".venv\Scripts\python.exe" -m uvicorn server.main:app --host 127.0.0.1 --port %PORT%
-if errorlevel 1 (
-  echo.
-  echo Server failed. If you saw Unable to create process / ???? path, run: start.bat fixvenv
-  pause
+if "%MODE%"=="debug" (
+  echo [i] Debug mode: logs below, close this window to quit.
+  "%VPY%" -m desktop --debug
+  if errorlevel 1 pause
+  exit /b
 )
+if "%MODE%"=="browser" (
+  "%VPY%" -m desktop --browser
+  if errorlevel 1 pause
+  exit /b
+)
+rem pythonw = no console window; errors go to data\app.log
+start "" ".venv\Scripts\pythonw.exe" -m desktop
+exit /b 0

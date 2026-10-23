@@ -3,3 +3,8 @@ node_modules/
 __pycache__/
 *.pyc
 .DS_Store
+build/
+release/
+data/*
+!data/skills.json
+!data/settings.example.json

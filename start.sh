@@ -1,29 +1,24 @@
 #!/usr/bin/env bash
-set -euo pipefail
-ROOT="$(cd "$(dirname "$0")" && pwd)"
-cd "$ROOT"
-
-PORT="${PORT:-8787}"
-DEV="${DEV:-0}"
-
-if [[ ! -d .venv ]]; then
-  python3 -m venv .venv
+# MOSS Prompt Studio - macOS / Linux launcher
+#   ./start.sh            native window (pywebview)
+#   ./start.sh --browser  system browser
+#   ./start.sh --debug    devtools
+set -e
+cd "$(dirname "$0")"
+PY=""
+for v in python3.12 python3.11 python3.13 python3; do
+  if command -v "$v" >/dev/null 2>&1 && "$v" -c 'import sys; sys.exit(0 if (3,11)<=sys.version_info[:2]<=(3,13) else 1)' 2>/dev/null; then PY="$v"; break; fi
+done
+[ -z "$PY" ] && { echo "Need Python 3.11-3.13"; exit 1; }
+[ -x .venv/bin/python ] || "$PY" -m venv .venv
+if ! cmp -s requirements.txt .venv/.req-stamp; then
+  .venv/bin/python -m pip install -q -U pip
+  .venv/bin/python -m pip install -q -r requirements.txt
+  cp requirements.txt .venv/.req-stamp
 fi
-.venv/bin/pip install -q -r server/requirements.txt
-
-if [[ ! -d node_modules ]]; then
-  npm install
-fi
-
-if [[ "$DEV" == "1" ]]; then
-  echo "==> Dev mode: API :$PORT + Vite :5173"
-  .venv/bin/uvicorn server.main:app --host 0.0.0.0 --port "$PORT" --reload &
-  API_PID=$!
-  trap 'kill $API_PID 2>/dev/null || true' EXIT
-  npm run dev -- --host 0.0.0.0 --port 5173
-else
-  echo "==> Building frontend…"
+if [ ! -f dist/index.html ]; then
+  command -v npm >/dev/null || { echo "dist/ missing and npm not found"; exit 1; }
+  [ -d node_modules ] || npm install
   npm run build
-  echo "==> Serving on http://0.0.0.0:$PORT"
-  exec .venv/bin/uvicorn server.main:app --host 0.0.0.0 --port "$PORT"
 fi
+exec .venv/bin/python -m desktop "$@"

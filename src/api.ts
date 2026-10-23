@@ -1,236 +1,187 @@
 import type {
-  AppSettings,
-  Draft,
-  HistoryRecord,
-  LayoutItem,
-  PerspectiveSettings,
-  Skill,
-  SkillKind,
-  SkillsState,
+  AppSettings, ArchiveItem, Attachment, CompileResult, Doc, Message, Page, Revision, Series, Session,
+  Skill, SkillKind, SkillsState,
 } from "./types";
 
-async function req<T>(url: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(url, init);
-  const text = await r.text();
-  let data: unknown = null;
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function parseError(r: Response): Promise<ApiError> {
+  let msg = `${r.status} ${r.statusText}`;
   try {
-    data = text ? JSON.parse(text) : null;
+    const j = await r.json();
+    if (j?.detail) msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail);
   } catch {
-    data = { detail: text };
+    /* ignore */
   }
-  if (!r.ok) {
-    const d = data as { detail?: string };
-    throw new Error(d?.detail || r.statusText || `HTTP ${r.status}`);
+  return new ApiError(r.status, msg);
+}
+
+async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const r = await fetch(path, {
+    method,
+    headers: body !== undefined && !(body instanceof FormData) ? { "Content-Type": "application/json" } : undefined,
+    body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
+  });
+  if (!r.ok) throw await parseError(r);
+  return (await r.json()) as T;
+}
+
+/** 页面关闭时用：keepalive 请求在页面卸载后仍会发完 */
+export function putKeepalive(path: string, body: unknown) {
+  try {
+    void fetch(path, { method: "PUT", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  } catch {
+    /* ignore */
   }
-  return data as T;
 }
 
-export function compile(draft: Draft) {
-  return req<{ prompt: string; mode: string }>("/api/compile", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ draft }),
-  });
-}
+const get = <T,>(p: string) => req<T>("GET", p);
+const post = <T,>(p: string, b?: unknown) => req<T>("POST", p, b ?? {});
+const put = <T,>(p: string, b: unknown) => req<T>("PUT", p, b);
+const patch = <T,>(p: string, b: unknown) => req<T>("PATCH", p, b);
+const del = <T,>(p: string) => req<T>("DELETE", p);
 
-export function enhance(body: {
-  idea: string;
-  mode: "caption" | "layout";
-  width?: number;
-  height?: number;
-  skill_id?: string;
-  context_hint?: string;
-  /** 用户画框。bbox 为画布绝对像素 xyxy，与图像同坐标系。 */
-  boxes?: LayoutItem[];
-  perspective?: PerspectiveSettings;
-}) {
-  return req<{
-    draft: Draft;
-    mode: string;
-    degraded?: boolean;
-    message?: string;
-    prompt?: string | null;
-    compile_error?: string;
-  }>("/api/enhance", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
+// ---------- 工作区 ----------
+export const api = {
+  workspace: () => get<{ series: Series[]; state: Record<string, unknown> }>("/api/workspace"),
+  putState: (state: Record<string, unknown>) => put("/api/state", { state }),
+  createSeries: (name: string) => post<Series>("/api/series", { name }),
+  renameSeries: (id: string, name: string) => patch(`/api/series/${id}`, { name }),
+  deleteSeries: (id: string) => del(`/api/series/${id}`),
+  createPage: (b: { series_id: string; name?: string; doc?: Doc; kind?: string; width?: number; height?: number }) =>
+    post<Page>("/api/pages", b),
+  getPage: (id: string) => get<Page>(`/api/pages/${id}`),
+  savePage: (id: string, b: { doc?: Doc; name?: string; sort?: number; revision?: { source: string; summary?: string } }) =>
+    put<Page>(`/api/pages/${id}`, b),
+  duplicatePage: (id: string) => post<Page>(`/api/pages/${id}/duplicate`),
+  deletePage: (id: string) => del(`/api/pages/${id}`),
+  revisions: (pid: string) => get<Revision[]>(`/api/pages/${pid}/revisions`),
+  revision: (rid: string) => get<Revision & { doc: Doc }>(`/api/revisions/${rid}`),
+  restoreRevision: (rid: string) => post<Page>(`/api/revisions/${rid}/restore`),
 
-export function contextEdit(body: {
-  draft: Draft;
-  message: string;
-  history?: { role: string; content: string }[];
-  skill_id?: string;
-}) {
-  return req<{
-    draft: Draft;
-    reply: string;
-    degraded?: boolean;
-    prompt?: string | null;
-    compile_error?: string;
-  }>("/api/context", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-export async function reverseImage(
-  file: File,
-  opts?: {
-    mode?: "caption" | "layout";
-    detail?: "long" | "medium" | "short";
-    width?: number;
-    height?: number;
-    skill_id?: string;
+  // ---------- 会话 ----------
+  sessions: (seriesId: string) => get<Session[]>(`/api/series/${seriesId}/sessions`),
+  createSession: (series_id: string, title?: string) => post<Session>("/api/sessions", { series_id, title }),
+  patchSession: (id: string, b: { title?: string; closed?: boolean }) => patch<Session>(`/api/sessions/${id}`, b),
+  deleteSession: (id: string) => del(`/api/sessions/${id}`),
+  clearSession: (id: string) => post<Session>(`/api/sessions/${id}/clear`, {}),
+  messages: (sid: string) => get<Message[]>(`/api/sessions/${sid}/messages`),
+  resolveProposal: (mid: string, b: { page_id: string; status: string; applied_doc?: Doc }) =>
+    post<{ message: Message; page: Page | null }>(`/api/messages/${mid}/proposal`, b),
+  upload: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return req<Attachment>("POST", "/api/attachments", fd);
   },
-) {
-  const fd = new FormData();
-  fd.append("file", file);
-  fd.append("mode", opts?.mode || "caption");
-  fd.append("detail", opts?.detail || "medium");
-  if (opts?.width != null) fd.append("width", String(opts.width));
-  if (opts?.height != null) fd.append("height", String(opts.height));
-  if (opts?.skill_id) fd.append("skill_id", opts.skill_id);
-  return req<{
-    mode?: "caption" | "layout";
-    detail?: string;
-    caption?: { long: string; medium: string; short: string };
-    watermark?: unknown[];
-    borders?: string[];
-    draft?: import("./types").LayoutDraft;
-    prompt?: string | null;
-    compile_error?: string;
-  }>("/api/reverse", { method: "POST", body: fd });
+
+  // ---------- 档案库 ----------
+  archive: () => get<ArchiveItem[]>("/api/archive"),
+  addArchive: (b: { title: string; category: string; doc: Doc; prompt: string }) => post<ArchiveItem>("/api/archive", b),
+  patchArchive: (id: string, b: { title?: string; category?: string }) => patch<ArchiveItem>(`/api/archive/${id}`, b),
+  deleteArchive: (id: string) => del(`/api/archive/${id}`),
+
+  // ---------- 编译 / 设置 / 反推 ----------
+  compile: (draft: unknown, view?: unknown) => post<CompileResult>("/api/compile", { draft, view }),
+  settings: () => get<AppSettings>("/api/settings"),
+  saveSettings: (b: Partial<AppSettings> & { clear_api_key?: boolean }) => put<AppSettings>("/api/settings", b),
+  testSettings: (b: { base_url?: string; api_key?: string; model?: string }) =>
+    post<{
+      ok: boolean; message: string; stream_ok: boolean; tools_ok: boolean; chat_ok: boolean; models_ok: boolean;
+      latency_ms: number | null; sample_models: string[]; model_count: number;
+    }>("/api/settings/test", b),
+  models: (b: { base_url?: string; api_key?: string }) =>
+    post<{ models: string[]; count: number }>("/api/settings/models", b),
+  reverse: (file: File, mode: "caption" | "layout", detail: string, width?: number, height?: number, imageWidth?: number, imageHeight?: number) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("mode", mode);
+    fd.append("detail", detail);
+    if (width) fd.append("width", String(width));
+    if (height) fd.append("height", String(height));
+    if (imageWidth) fd.append("image_width", String(imageWidth));
+    if (imageHeight) fd.append("image_height", String(imageHeight));
+    return req<Record<string, any>>("POST", "/api/reverse", fd);
+  },
+
+  // ---------- Skills ----------
+  skills: () => get<SkillsState>("/api/skills"),
+  setActiveSkill: (kind: SkillKind, id: string) => put<SkillsState>("/api/skills/active", { kind, id }),
+  createSkill: (b: { name: string; kind: SkillKind; description?: string; system_prompt: string }) =>
+    post<Skill>("/api/skills", b),
+  updateSkill: (id: string, b: { name?: string; description?: string; system_prompt?: string }) =>
+    put<Skill>(`/api/skills/${id}`, b),
+  resetSkill: (id: string) => post<Skill>(`/api/skills/${id}/reset`),
+  duplicateSkill: (id: string) => post<Skill>(`/api/skills/${id}/duplicate`),
+  deleteSkill: (id: string) => del(`/api/skills/${id}`),
+};
+
+export const attachmentUrl = (id: string) => `/api/attachments/${id}`;
+
+// ---------- Agent 流式 ----------
+export type AgentEvent =
+  | { type: "user_saved"; message: Message }
+  | { type: "model"; model: string }
+  | { type: "text"; delta: string }
+  | { type: "tool_pending"; name: string; label: string }
+  | { type: "tool"; name: string; label: string; brief: string; ok: boolean; result: string }
+  | { type: "ask"; question: string; options: string[]; multi: boolean }
+  | { type: "page_created"; page: Page }
+  | { type: "notice"; message: string }
+  | { type: "proposal"; message_id: string; page_id: string; page_name: string; base: Doc; proposed: Doc; summary: string[]; status: string }
+  | { type: "error"; message: string }
+  | { type: "done"; message: Message };
+
+export interface RunBody {
+  page_id: string;
+  doc: Doc;
+  view?: unknown;
+  message: string;
+  selection: string[];
+  skill_ids: string[];
+  attachments: string[];
+  replace_from_seq?: number | null;
+  quick?: string | null;
 }
 
-export function getSettings() {
-  return req<AppSettings>("/api/settings");
-}
-
-export function putSettings(body: Partial<AppSettings> & { api_key?: string }) {
-  return req<AppSettings>("/api/settings", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-export function listHistory() {
-  return req<{ items: HistoryRecord[] }>("/api/history");
-}
-
-export function saveHistory(item: Partial<HistoryRecord> & { title: string; draft: Draft }) {
-  return req<HistoryRecord>("/api/history", {
+export async function runAgent(sid: string, body: RunBody, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
+  const r = await fetch(`/api/sessions/${sid}/run`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(item),
-  });
-}
-
-export function deleteHistory(id: string) {
-  return req<{ ok: boolean }>(`/api/history/${id}`, { method: "DELETE" });
-}
-
-export function renameHistory(id: string, title: string) {
-  return req<HistoryRecord>(`/api/history/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
-  });
-}
-
-export function testSettings(body: {
-  base_url?: string;
-  api_key?: string;
-  model?: string;
-} = {}) {
-  return req<{
-    ok: boolean;
-    base_url: string;
-    models_ok: boolean;
-    chat_ok: boolean;
-    latency_ms: number | null;
-    model_count: number;
-    sample_models: string[];
-    tested_model?: string;
-    message: string;
-  }>("/api/settings/test", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
     body: JSON.stringify(body),
+    signal,
   });
+  if (!r.ok || !r.body) throw await parseError(r);
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i: number;
+    while ((i = buf.indexOf("\n\n")) >= 0) {
+      const block = buf.slice(0, i);
+      buf = buf.slice(i + 2);
+      for (const line of block.split("\n")) {
+        if (!line.startsWith("data:")) continue;
+        try {
+          onEvent(JSON.parse(line.slice(5).trim()) as AgentEvent);
+        } catch {
+          /* 跳过坏分片 */
+        }
+      }
+    }
+  }
 }
 
-export function listUpstreamModels(body: {
-  base_url?: string;
-  api_key?: string;
-} = {}) {
-  return req<{ base_url: string; models: string[]; count: number }>(
-    "/api/settings/models",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    },
-  );
-}
-
-export function listSkills() {
-  return req<SkillsState>("/api/skills");
-}
-
-export function setActiveSkill(kind: SkillKind, id: string) {
-  return req<SkillsState>("/api/skills/active", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind, id }),
-  });
-}
-
-export function createSkill(body: {
-  name: string;
-  kind: SkillKind;
-  description?: string;
-  system_prompt: string;
-}) {
-  return req<{ skill: Skill; skills: Skill[]; active: SkillsState["active"] }>("/api/skills", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-export function updateSkill(
-  id: string,
-  body: { name?: string; description?: string; system_prompt?: string },
-) {
-  return req<{ skill: Skill; skills: Skill[]; active: SkillsState["active"] }>(
-    `/api/skills/${id}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    },
-  );
-}
-
-export function resetSkill(id: string) {
-  return req<{ skill: Skill; skills: Skill[]; active: SkillsState["active"] }>(
-    `/api/skills/${id}/reset`,
-    { method: "POST" },
-  );
-}
-
-export function duplicateSkill(id: string) {
-  return req<{ skill: Skill; skills: Skill[]; active: SkillsState["active"] }>(
-    `/api/skills/${id}/duplicate`,
-    { method: "POST" },
-  );
-}
-
-export function deleteSkill(id: string) {
-  return req<SkillsState>(`/api/skills/${id}`, { method: "DELETE" });
+// 桌面壳（pywebview）提供的原生能力；浏览器里不存在
+export function desktopApi(): Record<string, (...a: any[]) => Promise<any>> | null {
+  const w = window as any;
+  return w.pywebview?.api ?? null;
 }
