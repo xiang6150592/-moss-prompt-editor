@@ -8,8 +8,9 @@ import { ReverseModal } from "./ReverseModal";
 import { confirmDialog, promptDialog } from "../dialog";
 import { boxColor, clone, emptyDoc, normalizeDoc, normalizeLayout, snap16 } from "../lib/doc";
 import {
-  DEFAULT_QUICK, addPage, currentPage, flushSave, replaceCurrentDoc, setQuick, setUi, toast, useStore, type QuickAction, useWorkState } from "../store";
+  DEFAULT_QUICK, addPage, currentPage, draftLayout, flushSave, replaceCurrentDoc, setQuick, setUi, toast, useStore, type DraftOpts, type QuickAction, useWorkState } from "../store";
 import type { AppSettings, ArchiveItem, Doc, Revision, Skill, SkillKind } from "../types";
+import { RESOLUTIONS } from "../types";
 import { AutoTextarea, Dial, Modal, Seg, cx } from "../ui";
 
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -383,6 +384,143 @@ function QuickModal() {
   );
 }
 
+
+// ---------- AI 起稿 ----------
+type DraftPrefs = { canvas: string; mode: DraftOpts["mode"]; camera: boolean; lighting: boolean; autoAccept: boolean };
+const DRAFT_KEY = "moss.draft.prefs";
+const DRAFT_DEFAULT: DraftPrefs = { canvas: "keep", mode: "replace", camera: true, lighting: true, autoAccept: true };
+let draftSeed = "";
+let draftLast = "";
+export function draftPrefs(): DraftPrefs {
+  try {
+    return { ...DRAFT_DEFAULT, ...(JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}") as Partial<DraftPrefs>) };
+  } catch {
+    return { ...DRAFT_DEFAULT };
+  }
+}
+function saveDraftPrefs(p: DraftPrefs) {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(p)); } catch { /* ignore */ }
+}
+export function draftCanvas(v: string): DraftOpts["canvas"] {
+  if (v === "keep" || v === "ai") return v;
+  const [w, h] = v.split("x").map(Number);
+  return w > 0 && h > 0 ? { w, h } : "keep";
+}
+/** 打开 AI 起稿弹窗；seed = 预填的描述 */
+export function openDraft(seed?: string) {
+  draftSeed = seed ?? "";
+  setUi({ modal: "draft" });
+}
+/** 空画布卡片 / 命令行：用上次的选项直接起稿 */
+export function quickDraft(text: string, patch?: Partial<DraftPrefs>): boolean {
+  const p = { ...draftPrefs(), ...patch };
+  const doc = useStore.getState().doc;
+  const empty = !!doc && doc.kind === "layout" && !doc.layout.items.length;
+  draftLast = text;
+  // 描述里点名了画幅（竖图 / 横幅 / 16:9…）时让 AI 决定，免得和“保持当前”打架
+  if (p.canvas === "keep" && /竖图|竖幅|竖屏|横图|横幅|横屏|宽屏|方图|方形|\d+\s*[:：比]\s*\d+/.test(text)) p.canvas = "ai";
+  return draftLayout({ text, canvas: draftCanvas(p.canvas), mode: empty ? "replace" : p.mode, camera: p.camera, lighting: p.lighting, autoAccept: p.autoAccept });
+}
+
+const DRAFT_EXAMPLES = [
+  "雨夜霓虹街头，穿风衣的女侦探站在画面左侧回头看，右后方是闪烁的中文招牌「夜来香」，低机位仰拍",
+  "午后老茶馆的窗边，两位老人隔着方桌下象棋，桌上有盖碗茶，暖阳从窗外斜射进来",
+  "香水产品海报：画面中央一瓶琥珀色香水，背景是流动的香槟色丝绸，顶部大标题「ÉCLAT」，底部一行小字",
+  "雪山脚下的营地，一名登山者背对镜头坐在帐篷前看日出，远处是连绵的雪峰，广角俯拍",
+];
+
+function DraftModal() {
+  const doc = useStore((s) => s.doc);
+  const streaming = useStore((s) => s.streaming);
+  const isLayout = doc?.kind === "layout";
+  const L = isLayout ? doc!.layout : null;
+  const n = L?.items.length ?? 0;
+  const [text, setText] = useState(() => {
+    const seed = draftSeed || draftLast || (L && !n ? L.summary.caption || "" : "");
+    draftSeed = "";
+    return seed;
+  });
+  const [p, setP] = useState<DraftPrefs>(() => {
+    const d = draftPrefs();
+    if (!isLayout) d.mode = "page";
+    else if (!n) d.mode = "replace";
+    return d;
+  });
+  const up = (x: Partial<DraftPrefs>) => setP({ ...p, ...x });
+  const close = () => { draftLast = text; setUi({ modal: null }); };
+  const go = () => {
+    if (!text.trim()) return;
+    saveDraftPrefs(isLayout && n ? p : { ...p, mode: draftPrefs().mode });
+    draftLast = text;
+    if (draftLayout({ text, canvas: p.mode === "append" ? "keep" : draftCanvas(p.canvas), mode: p.mode, camera: p.camera, lighting: p.lighting, autoAccept: p.autoAccept })) {
+      draftLast = "";
+      setUi({ modal: null });
+    }
+  };
+  const fixed = p.canvas !== "keep" && p.canvas !== "ai";
+  const canvasHint = p.mode === "append" ? `追加时保持当前 ${L?.width}×${L?.height}`
+    : p.canvas === "ai" ? "按内容自动选竖幅 / 横幅 / 方形" : p.canvas === "keep" ? (L ? `当前 ${L.width}×${L.height}` : "") : "";
+  return (
+    <Modal title="AI 起稿" icon={<Sparkles size={16} />} onClose={close}
+      foot={<>
+        <span className="hint">{streaming ? "Agent 正在回复，生成会排在后面" : "Ctrl+Enter 生成 · 结果可整体撤销"}</span>
+        <div className="spacer" />
+        <button type="button" className="btn" onClick={close}>取消</button>
+        <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={go}><Sparkles size={13} />生成布局</button>
+      </>}>
+      <div className="draft-form">
+        <div className="field">
+          <label>画面描述</label>
+          <AutoTextarea className="textarea" minRows={4} maxRows={12} autoFocus value={text}
+            placeholder="用一段话描述画面：主体是谁、在哪、在做什么、画面里有哪些东西和文字、什么光线和机位……"
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); go(); } }} />
+          <div className="draft-examples">
+            <span className="hint">试试：</span>
+            {DRAFT_EXAMPLES.map((x) => (
+              <button key={x} type="button" className="chip draft-ex" title={x} onClick={() => setText(x)}>{x.slice(0, 14)}…</button>
+            ))}
+          </div>
+        </div>
+        <div className="draft-grid">
+          <div className="field">
+            <label>写到哪里</label>
+            <Seg<DraftOpts["mode"]> value={p.mode} onChange={(v) => up({ mode: isLayout ? v : "page" })} full options={([
+              { v: "replace", t: "替换当前页", title: isLayout ? "用新布局替换当前页（可撤销）" : "Caption 页不能替换" },
+              { v: "append", t: "追加到当前页", title: "保留已有的框，只加新框" },
+              { v: "page", t: "新建一页", title: "在当前系列新建一页再起稿" },
+            ] as { v: DraftOpts["mode"]; t: string; title: string }[]).map((o) => ({ ...o, t: <span className={cx(!isLayout && o.v !== "page" && "muted")}>{o.t}</span> }))} />
+            <span className="hint">
+              {!isLayout ? "当前是 Caption 页，会新建一页 Layout"
+                : p.mode === "replace" ? (n ? `会替换掉当前的 ${n} 个框（Ctrl+Z 可恢复）` : "当前页是空的，直接画上去")
+                  : p.mode === "append" ? `保留当前 ${n} 个框，按描述补上新的` : "新页会在当前页后面"}
+            </span>
+          </div>
+          <div className="field">
+            <label>画幅</label>
+            <Seg value={fixed ? "fixed" : p.canvas} disabled={p.mode === "append"} onChange={(v) => up({ canvas: v === "fixed" ? `${RESOLUTIONS[0].width}x${RESOLUTIONS[0].height}` : v })} full options={[
+              { v: "keep", t: "保持当前" }, { v: "ai", t: "AI 决定" }, { v: "fixed", t: "指定" },
+            ]} />
+            {fixed && p.mode !== "append" ? (
+              <div className="draft-res">
+                {RESOLUTIONS.map((r) => {
+                  const v = `${r.width}x${r.height}`;
+                  return <button key={v} type="button" className={cx("chip", p.canvas === v && "accent")} onClick={() => up({ canvas: v })}>{r.name}<span className="num muted"> {r.width}×{r.height}</span></button>;
+                })}
+              </div>
+            ) : <span className="hint">{canvasHint}</span>}
+          </div>
+        </div>
+        <div className="draft-opts">
+          <label className="assist-opt"><input type="checkbox" checked={p.camera} onChange={(e) => up({ camera: e.target.checked })} /><span>同时设置机位（按描述里的俯拍 / 仰拍 / 景别打开摄像机）</span></label>
+          <label className="assist-opt"><input type="checkbox" checked={p.lighting} onChange={(e) => up({ lighting: e.target.checked })} /><span>同时设置灯光（选合适的打光预设，灯光描述写进提示词）</span></label>
+          <label className="assist-opt"><input type="checkbox" checked={p.autoAccept} onChange={(e) => up({ autoAccept: e.target.checked })} /><span>直接画到画布并编译（关掉则在 Agent 面板里逐条采纳）</span></label>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 export function Modals() {
   const m = useStore((s) => s.modal);
   if (m === "settings") return <SettingsModal />;
@@ -391,5 +529,6 @@ export function Modals() {
   if (m === "archive") return <ArchiveModal />;
   if (m === "revisions") return <RevisionsModal />;
   if (m === "quick") return <QuickModal />;
+  if (m === "draft") return <DraftModal />;
   return null;
 }

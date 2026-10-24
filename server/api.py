@@ -253,6 +253,7 @@ class RunBody(BaseModel):
     attachments: list[str] = Field(default_factory=list)
     replace_from_seq: Optional[int] = None
     quick: Optional[str] = None
+    mode: Optional[str] = None
 
 
 @router.post("/sessions/{sid}/run")
@@ -261,7 +262,8 @@ async def run_session(sid: str, body: RunBody):
         raise HTTPException(status_code=400, detail="消息为空")
     gen = run_agent(session_id=sid, page_id=body.page_id, doc=db.normalize_doc(body.doc), view=body.view,
                     message=body.message.strip(), selection=body.selection, skill_ids=body.skill_ids,
-                    attachments=body.attachments, replace_from_seq=body.replace_from_seq, quick=body.quick)
+                    attachments=body.attachments, replace_from_seq=body.replace_from_seq, quick=body.quick,
+                    mode=body.mode if body.mode in ("draft",) else None)
     return StreamingResponse(gen, media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 

@@ -63,6 +63,42 @@ export interface PromptOptions {
   depth: boolean;
   perspective: boolean;
   camera: boolean;
+  /** 编译时把灯光描述追加到整体描述（默认开） */
+  lighting: boolean;
+}
+
+export type LightRole = "key" | "fill" | "rim" | "bg" | "practical";
+
+/** 一盏灯。方向用和机位相同的约定：azimuth 像环绕角（0 = 从初始机位一侧照向主体，正值 = 右侧，180 = 背后），elevation 像俯仰（正 = 从上往下照） */
+export interface Light {
+  id: string;
+  role: LightRole;
+  enabled: boolean;
+  azimuth: number;
+  elevation: number;
+  /** 强度 0–2，1 = 正常 */
+  intensity: number;
+  /** 色温（K）；为 null 时用 color */
+  kelvin: number | null;
+  color: string;
+  /** 0 = 硬光，1 = 柔光 */
+  softness: number;
+}
+
+export interface Lighting {
+  enabled: boolean;
+  /** 当前套用的预设 id；手动改了灯位就清空（显示为自定义） */
+  preset: string;
+  lights: Light[];
+  /** 环境光 0–1 */
+  ambient: number;
+  ambient_kelvin: number;
+  /** 氛围效果 id（体积光、薄雾…） */
+  extras: string[];
+  /** 补充描述，原样追加 */
+  note: string;
+  /** true：灯光方位相对机位（转机位时灯跟着转）；false：灯固定在场景里 */
+  follow: boolean;
 }
 
 export interface LayoutSummary {
@@ -82,6 +118,7 @@ export interface LayoutDraft {
   perspective?: PerspectiveSettings;
   prompt_options?: PromptOptions;
   camera?: Camera;
+  lighting?: Lighting;
 }
 
 export interface CaptionDraft {

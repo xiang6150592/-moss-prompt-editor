@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { applyChanges, diffDocs, wordDiff } from "./changeset";
 import {
   alignGroupDepth, applyMoveResult, autoFrame, baseBounds, bodyOf, bringIntoView, cameraAt, cameraCenter, compileView, dragInView, dragOnPlan,
-  estimateBodies, insideFrame, measureItems, moveTargets, planView, projectLayout, rebaseCamera, solveFraming, subjectItem,
+  estimateBodies, insideFrame, itemFromView, measureItems, moveTargets, planView, projectLayout, rebaseCamera, solveFraming, subjectItem,
 } from "./camera";
 import { emptyDoc, expandGroups, normalizeLayout } from "./doc";
 import type { LayoutDraft } from "../types";
@@ -302,6 +302,33 @@ t("估算体块：手持物跟随角色深度", () => {
   assert.ok(zr > zs, "不相干的物体仍按地平线估");
   const e = estimateBodies(d);
   assert.equal(e.items[1].body!.z, zg);
+});
+
+t("镜头视图里画框：投影正好是画出的矩形，别的框不动", () => {
+  const base = estimateBodies(lay);
+  const d: LayoutDraft = { ...base, camera: { ...base.camera!, enabled: true, orbit: 35, pitch: 12, distance: 1.2 } };
+  const before = projectLayout(d);
+  // 画在女孩身上（深度取女孩）、画在空地（取主体深度）、画一个比主体还大的角色（主体变了，机位要补偿）
+  const cases: [number[], "object" | "character", { x: number; y: number }][] = [
+    [[420, 700, 560, 820], "object", { x: 430, y: 710 }],
+    [[60, 1200, 220, 1380], "object", { x: 61, y: 1201 }],
+    [[80, 300, 700, 1500], "character", { x: 81, y: 301 }],
+  ];
+  for (const [rect, label, start] of cases) {
+    const r = itemFromView(d, rect as any, label, start)!;
+    assert.ok(r && r.body.anchor === "world");
+    const n2: LayoutDraft = { ...d, camera: r.camera || d.camera, items: [...d.items, { id: "new", label, caption: "", bbox: r.bbox, color: 0, depth: "auto", body: r.body } as any] };
+    const p = projectLayout(n2);
+    p.items.new.raw.forEach((v, i) => assert.ok(Math.abs(v - rect[i]) <= 1.5, `${label} ${p.items.new.raw} vs ${rect}`));
+    for (const it of d.items) before.items[it.id].raw.forEach((v, i) => assert.ok(Math.abs(v - p.items[it.id].raw[i]) <= 1, `${it.id} 跳了`));
+    if (label === "character") assert.ok(r.camera, "新主体要补偿机位");
+  }
+  const onGirl = itemFromView(d, [420, 700, 560, 820], "object", { x: 430, y: 710 })!;
+  const girlZ = bodyOf(d.items[2], d).z;
+  assert.ok(Math.abs(onGirl.body.z - girlZ) < 0.25, `画在女孩身上的深度 ${onGirl.body.z} ≈ ${girlZ}`);
+  const txt = itemFromView(d, [10, 10, 200, 80], "text")!;
+  assert.equal(txt.body.anchor, "screen");
+  assert.deepEqual(txt.bbox, [10, 10, 200, 80]);
 });
 
 console.log(`${n} passed`);

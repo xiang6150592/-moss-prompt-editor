@@ -147,6 +147,7 @@ export interface RunBody {
   attachments: string[];
   replace_from_seq?: number | null;
   quick?: string | null;
+  mode?: string | null;
 }
 
 export async function runAgent(sid: string, body: RunBody, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {

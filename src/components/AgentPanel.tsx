@@ -8,6 +8,7 @@ import { useStoreWithEqualityFn } from "zustand/traditional";
 import { api, attachmentUrl } from "../api";
 import { confirmDialog, promptDialog } from "../dialog";
 import { diffDocs, wordDiff, type Change } from "../lib/changeset";
+import { openDraft, quickDraft } from "./Modals";
 import { itemName, normalizeDoc } from "../lib/doc";
 import {
   assistAgent, clearSession, closeSession, currentPage, currentSeries, deleteSession, dropQueued, openSession, renameSession, rerun,
@@ -21,6 +22,7 @@ const EMPTY_MSGS: Message[] = [];
 const EMPTY_SKILLS: Skill[] = [];
 
 const SLASH = [
+  { cmd: "draft", label: "AI 起稿（/draft 后接画面描述）", icon: <Sparkles size={13} /> },
   { cmd: "fill", label: "补全当前页的提示词", icon: <Wand2 size={13} /> },
   { cmd: "new", label: "开新对话", icon: <MessageSquarePlus size={13} /> },
   { cmd: "clear", label: "清空当前对话", icon: <Eraser size={13} /> },
@@ -92,7 +94,7 @@ function ChangeRow({ ch, checked, onToggle, pending }: { ch: Change; checked: bo
     <div className={cx("change", `k-${ch.kind}`)}>
       <div className="change-row">
         {pending && <input type="checkbox" checked={checked} onChange={onToggle} />}
-        <span className={cx("change-kind", ch.kind)}>{{ add: "新增", remove: "删除", update: "修改", order: "图层", summary: "描述", caption: "文本", canvas: "画布", camera: "机位", kind: "类型" }[ch.kind]}</span>
+        <span className={cx("change-kind", ch.kind)}>{{ add: "新增", remove: "删除", update: "修改", order: "图层", summary: "描述", caption: "文本", canvas: "画布", camera: "机位", lighting: "灯光", kind: "类型" }[ch.kind]}</span>
         <span className="change-title ellipsis" title={ch.title}>{ch.title.replace(/^(新增|修改|删除)\s*/, "")}</span>
         {hasDetail && (
           <button type="button" className="btn btn-ghost btn-xs btn-icon" onClick={() => setOpen(!open)} title="查看文字差异">
@@ -301,7 +303,7 @@ function Welcome() {
         </button>
       )}
       <div className="welcome-tips">
-        {tips.map((t) => <button key={t} type="button" className="tip" onClick={() => send(t)}>{t}</button>)}
+        {tips.map((t) => <button key={t} type="button" className="tip" onClick={() => (t.startsWith("起稿：") ? quickDraft(t.slice(3)) : send(t))}>{t}</button>)}
       </div>
       {!keySet && (
         <div className="notice warn"><AlertTriangle size={12} />还没配置 API Key。画框、编辑和编译不受影响；<button type="button" className="link" onClick={() => setUi({ modal: "settings" })}>去设置</button></div>
@@ -381,7 +383,7 @@ function Composer() {
     selection: useStore((st) => st.selection),
   };
   const selKey = useStore((st) => (st.doc?.kind === "layout"
-    ? st.doc.layout.items.filter((x) => st.selection.includes(x.id)).map((x) => `${x.id}\u0001${itemName(x)}`).join("\u0002")
+    ? st.doc.layout.items.map((x, i) => (st.selection.includes(x.id) ? `${x.id}\u0001${itemName(x, i)}` : "")).filter(Boolean).join("\u0002")
     : ""));
   const [text, setText] = useState("");
   const [atts, setAtts] = useState<Attachment[]>([]);
@@ -401,6 +403,7 @@ function Composer() {
     setText("");
     if (cmd === "new") void startNewSession();
     else if (cmd === "clear") void askClear();
+    else if (cmd === "draft") openDraft();
     else assistAgent();
   };
   useEffect(() => setUseSel(true), [s.selection.join(",")]);
@@ -437,6 +440,11 @@ function Composer() {
     if (!t && !atts.length) return;
     const cmd = t.toLowerCase();
     if (!atts.length && SLASH.some((c) => "/" + c.cmd === cmd)) return runCmd(cmd.slice(1));
+    const dm = /^\/(?:draft|起稿)\s+([\s\S]+)$/i.exec(t);
+    if (dm && !atts.length) {
+      if (quickDraft(dm[1].trim())) setText("");
+      return;
+    }
     send(t || "看看这张参考图", {
       attachments: atts, skillIds, selection: useSel ? selItems.map((x) => x.id) : [],
     });

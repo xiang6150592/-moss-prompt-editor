@@ -2,8 +2,9 @@
 import type { Doc, LayoutItem } from "../types";
 import { LABEL_TEXT } from "../types";
 import { clone, deepEqual, itemName } from "./doc";
+import { lightingSummaryZh, presetById } from "./lighting";
 
-export type ChangeKind = "kind" | "caption" | "canvas" | "summary" | "camera" | "add" | "remove" | "update" | "order";
+export type ChangeKind = "kind" | "caption" | "canvas" | "summary" | "camera" | "lighting" | "add" | "remove" | "update" | "order";
 
 export interface Change {
   key: string;
@@ -38,6 +39,12 @@ export function diffDocs(base: Doc, next: Doc): Change[] {
     });
   }
   if (!deepEqual(a.camera, b.camera)) out.push({ key: "camera", kind: "camera", title: "机位参数" });
+  if (!deepEqual(a.lighting ?? null, b.lighting ?? null) || !!a.prompt_options?.lighting !== !!b.prompt_options?.lighting) {
+    const pn = b.lighting?.preset ? presetById(b.lighting.preset)?.name : "";
+    const title = !b.lighting?.enabled ? "关闭灯光" : `灯光${pn ? `：${pn}` : "（自定义）"}`;
+    const sum = (d: typeof a) => (d.lighting?.enabled ? lightingSummaryZh(d.lighting, d.camera).join("；") : "");
+    out.push({ key: "lighting", kind: "lighting", title, before: sum(a), after: sum(b) });
+  }
 
   const am = new Map(a.items.map((it) => [it.id, it]));
   const bm = new Map(b.items.map((it) => [it.id, it]));
@@ -83,6 +90,10 @@ export function applyChanges(target: Doc, base: Doc, next: Doc, accepted: Set<st
   if (on("camera")) {
     L.camera = clone(N.camera);
     L.prompt_options = clone(N.prompt_options);
+  }
+  if (on("lighting")) {
+    L.lighting = clone(N.lighting);
+    L.prompt_options = { depth: true, perspective: false, camera: true, ...L.prompt_options, lighting: N.prompt_options?.lighting !== false };
   }
   const nm = new Map(N.items.map((it) => [it.id, it]));
   let items = L.items.filter((it) => !on(`rm:${it.id}`)).map((it) => (on(`up:${it.id}`) && nm.has(it.id) ? clone(nm.get(it.id)!) : it));

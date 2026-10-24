@@ -15,7 +15,8 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "noEmitOnError": false
+    "noEmitOnError": false,
+    "resolveJsonModule": true
   },
   "include": ["src"]
 }

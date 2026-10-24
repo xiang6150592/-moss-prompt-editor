@@ -1,4 +1,5 @@
 import type { BBox, Camera, Doc, LayoutDraft, LayoutItem, PerspectiveSettings, PromptOptions } from "../types";
+import { defaultLighting, normalizeLighting } from "./lighting";
 
 export const BOX_COLORS = ["#3F6FD8", "#D9822B", "#3E9B6B", "#C2457A", "#7A5BD1", "#2A97A8"];
 export const boxColor = (it: Pick<LayoutItem, "color">, i = 0) =>
@@ -27,8 +28,9 @@ export function emptyLayout(width = 1024, height = 1536): LayoutDraft {
   return {
     width, height, bbox_coord_space: "abs", bbox_format: "xyxy",
     summary: { caption: "", canvas: "single" }, items: [],
-    prompt_options: { depth: true, perspective: false, camera: true },
+    prompt_options: { depth: true, perspective: false, camera: true, lighting: true },
     camera: defaultCamera(),
+    lighting: defaultLighting(),
   };
 }
 
@@ -83,8 +85,9 @@ export function normalizeLayout(d: Partial<LayoutDraft> | undefined): LayoutDraf
     bbox_format: "xyxy",
     summary: { canvas: "single", ...(d.summary || {}), caption: d.summary?.caption ?? "" },
     items: pruneGroups(items),
-    prompt_options: { depth: po.depth !== false, perspective: !!po.perspective, camera: po.camera !== false },
+    prompt_options: { depth: po.depth !== false, perspective: !!po.perspective, camera: po.camera !== false, lighting: po.lighting !== false },
     camera: cam,
+    lighting: normalizeLighting(d.lighting),
   };
 }
 

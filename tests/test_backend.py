@@ -240,3 +240,46 @@ def test_agent_tags_fallback(client, monkeypatch):
 
 async def _noop():
     return None
+
+
+def test_agent_draft_mode(client, monkeypatch):
+    """AI 起稿：mode=draft 时系统提示带起稿指南，一轮写入布局 + 机位 + 灯光，生成一个待确认改动。"""
+    s = load_settings()
+    s["api_key"] = "sk-test"
+    save_settings(s)
+    monkeypatch.setattr(agent, "maybe_summarize", lambda sid: _noop())
+    captured = {}
+    script = [
+        ("", [
+            ("replace_layout", {"summary": {"caption": "A detective on a rainy neon street."}, "items": [
+                {"name": "街道", "label": "object", "caption": "rainy street", "bbox": [0, 0, 1536, 1024]},
+                {"name": "侦探", "label": "character", "caption": "a detective", "bbox": [200, 200, 640, 1000]}],
+                "width": 1536, "height": 1024, "resize_canvas": True}),
+            ("set_camera", {"pitch": -12}),
+            ("set_lighting", {"preset": "neon"}),
+        ]),
+        ("起稿完成。", []),
+    ]
+    inner = _fake_stream(script)
+
+    async def spy(messages, **kw):
+        captured.setdefault("system", messages[0]["content"])
+        async for x in inner(messages, **kw):
+            yield x
+
+    monkeypatch.setattr(llm, "stream_chat", spy)
+    series = client.post("/api/series", json={"name": "起稿"}).json()
+    page = client.get("/api/workspace").json()["series"][-1]["pages"][0]
+    sess = client.post("/api/sessions", json={"series_id": series["id"]}).json()
+    doc = {"kind": "layout", "layout": _sample_layout(), "caption": {"caption": ""}}
+    r = client.post(f"/api/sessions/{sess['id']}/run", json={
+        "page_id": page["id"], "doc": doc, "message": "【AI 起稿】雨夜侦探", "quick": "AI 起稿", "mode": "draft"})
+    evs = _events(r.text)
+    assert "AI 起稿" in captured["system"]
+    props = [e for e in evs if e["type"] == "proposal"]
+    assert len(props) == 1
+    L = props[0]["proposed"]["layout"]
+    assert (L["width"], L["height"]) == (1536, 1024)
+    assert [it["name"] for it in L["items"]] == ["街道", "侦探"]
+    assert L["camera"]["enabled"] and L["camera"]["pitch"] == -12
+    assert L["lighting"]["preset"] == "neon" and L["lighting"]["enabled"]

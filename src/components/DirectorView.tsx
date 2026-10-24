@@ -3,15 +3,19 @@
  * 自动取景 / 跟随主体 / 俯视图拖机位。所有机位修改都经过 applyCam。
  */
 import {
-  AlertTriangle, Anchor as AnchorIcon, CheckCircle2, ChevronDown, Clapperboard, Crosshair, Eye, Grid3x3, LocateFixed,
-  Magnet, Maximize2, Minimize2, Move, Move3d, Redo2, Rotate3d, RotateCcw, ScanSearch, Undo2, Wand2, X,
+  AlertTriangle, Anchor as AnchorIcon, Box, Camera as CameraIcon, CheckCircle2, ChevronDown, Clapperboard, Columns2, Crosshair, Eye, Grid3x3, Lightbulb,
+  LocateFixed, Magnet, Maximize2, Minimize2, Move, Move3d, Redo2, Rotate3d, RotateCcw, ScanSearch, Square, Undo2, Wand2, X,
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { desktopApi } from "../api";
 import {
-  CAMERA_LIMITS, CAMERA_PRESETS, autoFrame, bodyOf, cameraMoved, cameraPhraseZh, clampCamera, dragInView, dragOnPlan, equivFocal, framingZoom,
-  measureItems, moveTargets, planView, projectLayout, solveFraming, subjectItem, wrapDeg, type AutoFrameMode, type FrameGoal, type Projection,
+  CAMERA_LIMITS, CAMERA_PRESETS, CUBE_FACES, autoFrame, bodyOf, cameraMoved, cameraPhraseZh, clampCamera, dragInView, dragOnPlan, equivFocal, faceNormal,
+  framingZoom, measureItems, moveTargets, planView, projectLayout, sceneData, solveFraming, subjectItem, wrapDeg, type AutoFrameMode, type FrameGoal,
+  type Projection,
 } from "../lib/camera";
+import { backdropShade, hexRgb, lightingSummaryZh, normalizeLighting, presetById, rgbHex, shade, worldLights, type RGB } from "../lib/lighting";
+import { BodyPanel, LightingPanel } from "./DirectorPanels";
+import { SceneView } from "./SceneView";
 import { boxColor, defaultCamera, itemName } from "../lib/doc";
 import {
   applyMove, bakeCamera, bringAllIntoFrame, bringIntoFrame, currentPage, nudgeInView, redo, select, setCamera, setUi, toast, undo, useStore, withGroup,
@@ -31,10 +35,18 @@ interface Prefs {
   keepSize: boolean;
   /** 拖拽画面时：转机位 / 移动体块 */
   tool: "camera" | "move";
+  /** 主区：镜头画面 / 分屏 / 3D 场景 */
+  layout: "shot" | "split" | "scene";
+  /** 分屏时镜头画面占的比例 */
+  split: number;
+  /** 镜头画面里按灯光给体块着色 */
+  shade: boolean;
+  /** 右侧分页 */
+  tab: "camera" | "light" | "body";
 }
 const PREF_KEY = "moss.director.prefs";
 const loadPrefs = (): Prefs => {
-  const d: Prefs = { thirds: true, safe: false, ghost: true, outside: true, keepSize: false, tool: "camera" };
+  const d: Prefs = { thirds: true, safe: false, ghost: true, outside: true, keepSize: false, tool: "camera", layout: "split", split: 0.5, shade: true, tab: "camera" };
   try {
     return { ...d, ...JSON.parse(localStorage.getItem(PREF_KEY) || "{}") };
   } catch {
@@ -247,6 +259,10 @@ export function DirectorView() {
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
   const [hover, setHover] = useState<string | null>(null);
+  const [activeLight, setActiveLight] = useState<string | null>(null);
+  const [mainSize, setMainSize] = useState({ w: 1200, h: 800 });
+  const mainRef = useRef<HTMLDivElement>(null);
+  const pageId = useStore((s) => s.pageId);
   const [viewZoom, setViewZoom] = useState(1);
   const [vp, setVp] = useState({ w: 1000, h: 700 });
   const [fs, setFs] = useState(false);
@@ -263,13 +279,17 @@ export function DirectorView() {
 
   useEffect(() => {
     const el = view.current;
-    if (!el) return;
+    const mel = mainRef.current;
+    if (!el || !mel) return;
     const ro = new ResizeObserver((en) => {
-      const r = en[0].contentRect;
-      const w = Math.floor(r.width), h = Math.floor(r.height);
-      setVp((p) => (p.w === w && p.h === h ? p : { w, h }));
+      for (const e of en) {
+        const w = Math.floor(e.contentRect.width), h = Math.floor(e.contentRect.height);
+        if (e.target === el) { if (w > 0 && h > 0) setVp((p) => (p.w === w && p.h === h ? p : { w, h })); }
+        else setMainSize((p) => (p.w === w && p.h === h ? p : { w, h }));
+      }
     });
     ro.observe(el);
+    ro.observe(mel);
     return () => ro.disconnect();
   }, []);
 
@@ -618,9 +638,80 @@ export function DirectorView() {
     );
   }) : null;
 
+  // ---------- 光影预览：按灯光给体块的各个面着色 ----------
+  const lgx = L.lighting ? normalizeLighting(L.lighting) : null;
+  const shadeOn = prefs.shade && !!lgx?.enabled && lgx.lights.some((l) => l.enabled);
+  let shadeLayer: React.ReactNode = null;
+  if (shadeOn && lgx) {
+    const sd = sceneData(L, cam);
+    const wl = worldLights(lgx, cam);
+    const C = sd.frame.C;
+    const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+    const polys: React.ReactNode[] = [];
+    const fa = toV(0, 0);
+    const air = rgbHex(backdropShade([0.62, 0.6, 0.58], wl, lgx));
+    for (const id of proj.order) {
+      const k = L.items.findIndex((x) => x.id === id);
+      const it = L.items[k];
+      const pr = proj.items[id];
+      const si = sd.items.find((x) => x.id === id);
+      if (!it || it.hidden || !pr || !si) continue;
+      const base = mix(hexRgb(boxColor(it, k)), [0.86, 0.84, 0.8], 0.42);
+      if (pr.anchor === "backdrop") {
+        const a = toV(pr.raw[0], pr.raw[1]), b = toV(pr.raw[2], pr.raw[3]);
+        polys.push(<rect key={id} x={a.x} y={a.y} width={b.x - a.x} height={b.y - a.y} fill={rgbHex(backdropShade(mix(base, [0.7, 0.7, 0.7], 0.3), wl, lgx))} fillOpacity={0.75} />);
+        continue;
+      }
+      if (pr.anchor !== "world" || !pr.corners) continue;
+      const flat = Math.hypot(si.pts[0][0] - si.pts[4][0], si.pts[0][1] - si.pts[4][1], si.pts[0][2] - si.pts[4][2]) < 1e-6;
+      const fs: { d: string; fill: string; depth: number }[] = [];
+      for (const f of flat ? [CUBE_FACES[0]] : CUBE_FACES) {
+        const pts = f.map((i) => si.pts[i]);
+        const fc = [0, 1, 2].map((j) => pts.reduce((acc, P) => acc + P[j], 0) / 4) as [number, number, number];
+        let n = faceNormal(si.pts, f, si.center);
+        const toC = [C[0] - fc[0], C[1] - fc[1], C[2] - fc[2]];
+        const facing = n[0] * toC[0] + n[1] * toC[1] + n[2] * toC[2];
+        if (flat && facing < 0) n = [-n[0], -n[1], -n[2]];
+        else if (!flat && facing <= 0) continue;
+        const c2 = f.map((i) => pr.corners![i]);
+        if (c2.some((q) => !q)) continue;
+        const d = c2.map((q, i) => { const v = toV(q!.x, q!.y); return `${i ? "L" : "M"}${lim(v.x).toFixed(1)} ${lim(v.y).toFixed(1)}`; }).join("") + "Z";
+        fs.push({ d, fill: rgbHex(shade(n, base, wl, lgx)), depth: Math.hypot(toC[0], toC[1], toC[2]) });
+      }
+      fs.sort((a, b) => b.depth - a.depth);
+      fs.forEach((f, i) => polys.push(<path key={`${id}-${i}`} d={f.d} fill={f.fill} fillOpacity={0.92} />));
+    }
+    shadeLayer = (
+      <svg className="dir-svg dir-shade" width={vp.w} height={vp.h}>
+        <rect x={fa.x} y={fa.y} width={bw} height={bh} fill={air} />
+        {polys}
+      </svg>
+    );
+  }
+  const lightTitle = lgx?.enabled ? `${lgx.preset ? presetById(lgx.preset)?.name || "自定义" : "自定义"}` : "";
+
   const hz = proj.horizon ? clipLine(toV(proj.horizon.a.x, proj.horizon.a.y), toV(proj.horizon.b.x, proj.horizon.b.y), 0, 0, vp.w, vp.h) : null;
   const vpt = proj.vp ? toV(proj.vp.x, proj.vp.y) : null;
   const mask = `M0 0H${vp.w}V${vp.h}H0Z M${ox} ${oy}v${bh}h${bw}v${-bh}Z`;
+  const horiz = mainSize.w >= mainSize.h * 1.15;
+  const startSplit = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const el = e.currentTarget as HTMLElement;
+    el.setPointerCapture(e.pointerId);
+    const mv = (ev: PointerEvent) => {
+      const r = mainRef.current!.getBoundingClientRect();
+      const t = horiz ? (ev.clientX - r.left) / r.width : (ev.clientY - r.top) / r.height;
+      setPrefs({ split: Math.round(Math.max(0.2, Math.min(0.8, t)) * 1000) / 1000 });
+    };
+    const up = () => {
+      el.removeEventListener("pointermove", mv);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+    };
+    el.addEventListener("pointermove", mv);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+  };
   const corner = 14;
 
   return (
@@ -630,7 +721,18 @@ export function DirectorView() {
         <span className="dir-title">镜头调度</span>
         <span className="muted ellipsis dir-page">{pageName}</span>
         <span className="chip warm ellipsis dir-phrase" title="编译时追加到整体描述的镜头语言">{phrase}</span>
+        {lgx?.enabled && (
+          <button type="button" className="chip dir-light-chip" title={lightingSummaryZh(lgx, cam).join("\n") || "灯光"} onClick={() => setPrefs({ tab: "light" })}>
+            <Lightbulb size={11} /><span className="dlc-lbl ellipsis">{lightTitle}</span>
+          </button>
+        )}
         <div className="spacer" />
+        <Seg small value={prefs.layout} onChange={(v) => setPrefs({ layout: v })} options={[
+          { v: "shot", t: <><Square size={13} /><span className="bar-lbl">镜头</span></>, title: "只看镜头画面" },
+          { v: "split", t: <><Columns2 size={13} /><span className="bar-lbl">分屏</span></>, title: "镜头画面 + 3D 场景并排" },
+          { v: "scene", t: <><Box size={13} /><span className="bar-lbl">3D</span></>, title: "只看 3D 场景：自由视角，拖体块、镜头和灯" },
+        ]} />
+        <div className="bar-sep" />
         <Seg small value={prefs.tool} onChange={(v) => setPrefs({ tool: v })} options={[
           { v: "camera", t: <><Rotate3d size={13} /><span className="bar-lbl">机位</span></>, title: "拖拽画面转动机位（M 切换）" },
           { v: "move", t: <><Move size={13} /><span className="bar-lbl">体块</span></>, title: "拖动框移动 3D 体块，出画的也能拖回来；拖空白处仍可转机位（M 切换）" },
@@ -638,7 +740,7 @@ export function DirectorView() {
         {prefs.tool === "move" && <MoveModeMenu align="right" />}
         <div className="bar-sep" />
         <div className="btn-split">
-          <button type="button" className="btn btn-sm btn-warm" onClick={() => runAuto("smart")} title="保持原构图；放不下时把全部体块收进画面（A）"><Wand2 size={13} />自动取景</button>
+          <button type="button" className="btn btn-sm btn-warm" onClick={() => runAuto("smart")} title="保持原构图；放不下时把全部体块收进画面（A）"><Wand2 size={13} /><span className="btn-lbl">自动取景</span></button>
           <button ref={auto.ref} type="button" className="btn btn-sm btn-warm btn-icon" onClick={auto.toggle}><ChevronDown size={13} /></button>
         </div>
         <Popover anchor={auto.ref.current} open={auto.open} onClose={auto.close} width={260} align="right">
@@ -667,6 +769,7 @@ export function DirectorView() {
           <MenuItem active={prefs.ghost} onClick={() => setPrefs({ ghost: !prefs.ghost })} meta={prefs.ghost ? "✓" : ""}>原框虚影</MenuItem>
           <MenuItem active={showWire} onClick={() => setUi({ showWire: !showWire })} meta={showWire ? "✓" : ""}>3D 线框</MenuItem>
           <MenuItem active={prefs.outside} onClick={() => setPrefs({ outside: !prefs.outside })} meta={prefs.outside ? "✓" : ""}>显示画外内容</MenuItem>
+          <MenuItem active={prefs.shade} onClick={() => setPrefs({ shade: !prefs.shade })} meta={prefs.shade ? "✓" : ""}>光影预览（开灯光时）</MenuItem>
         </Popover>
         <button type="button" className="btn btn-sm btn-icon" disabled={!canUndo} onClick={undo} title="撤销（Ctrl+Z）"><Undo2 size={14} /></button>
         <button type="button" className="btn btn-sm btn-icon" disabled={!canRedo} onClick={redo} title="重做（Ctrl+Shift+Z）"><Redo2 size={14} /></button>
@@ -678,11 +781,15 @@ export function DirectorView() {
         <button type="button" className="btn btn-sm btn-primary" onClick={exit} title="退出镜头调度（Esc）"><X size={13} />完成</button>
       </header>
 
-      <div ref={view} className={cx("dir-view", orbiting && `is-${orbiting}`, prefs.tool === "move" && hover && !orbiting && "can-move")} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp}
+      <div ref={mainRef} className={cx("dir-main", `lay-${prefs.layout}`, horiz ? "dm-row" : "dm-col")}>
+      <div ref={view} className={cx("dir-view", orbiting && `is-${orbiting}`, prefs.tool === "move" && hover && !orbiting && "can-move", shadeOn && "shading")}
+        style={prefs.layout === "split" ? { flex: `${prefs.split} 1 0` } : undefined}
+        onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp}
         onPointerCancel={() => { drag.current = null; setOrbiting(""); }} onPointerLeave={() => !drag.current && setHover(null)}>
         <div className="dir-frame" style={{ left: ox, top: oy, width: bw, height: bh }}>
           <div className="artboard-grid" />
         </div>
+        {shadeLayer}
         {boxes}
         <svg className="dir-svg" width={vp.w} height={vp.h}>
           {hz && <line className="dir-horizon" x1={hz.x1} y1={hz.y1} x2={hz.x2} y2={hz.y2} />}
@@ -736,8 +843,28 @@ export function DirectorView() {
           )}
         </div>
       </div>
+      {prefs.layout === "split" && <div className="dir-splitter" onPointerDown={startSplit} title="拖动调整两边大小，双击平分" onDoubleClick={() => setPrefs({ split: 0.5 })} />}
+      {prefs.layout !== "shot" && (
+        <div className="dir-scene" style={prefs.layout === "split" ? { flex: `${1 - prefs.split} 1 0` } : undefined}>
+          <SceneView L={L} cam={cam} pageId={pageId} selection={selection} hover={hover} setHover={setHover} onCam={(p, key) => applyCam(p, key)}
+            activeLight={activeLight} setActiveLight={(id) => { setActiveLight(id); if (id) setPrefs({ tab: "light" }); }} />
+        </div>
+      )}
+      </div>
 
       <aside className="dir-side">
+        <div className="dir-tabs">
+          {([
+            ["camera", <><CameraIcon size={13} />机位</>],
+            ["light", <><Lightbulb size={13} />灯光{lgx?.enabled && <span className="dir-tab-dot" />}</>],
+            ["body", <><Box size={13} />体块{selection.length === 1 && <span className="dir-tab-dot sel" />}</>],
+          ] as [Prefs["tab"], React.ReactNode][]).map(([v, t]) => (
+            <button key={v} type="button" className={cx("dir-tab", prefs.tab === v && "on")} onClick={() => setPrefs({ tab: v })}>{t}</button>
+          ))}
+        </div>
+        {prefs.tab === "light" && <LightingPanel L={L} cam={cam} active={activeLight} setActive={setActiveLight} onSent={() => { exit(); toast("已交给 Agent，结果在右侧面板", "ok"); }} />}
+        {prefs.tab === "body" && <BodyPanel L={L} cam={cam} selection={selection} onFrame={frameItem} />}
+        {prefs.tab === "camera" && <>
         <section className="dir-sec">
           <div className="dir-sec-head">
             <span className="section-title">机位</span>
@@ -809,6 +936,7 @@ export function DirectorView() {
             ))}
           </div>
         </section>
+        </>}
         <div className="dir-side-foot">
           <Move3d size={12} />
           <span>机位改动和主画布同步，可撤销；退出后在主画布看到相同结果。</span>

@@ -2,18 +2,19 @@ import { create } from "zustand";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import { api, desktopApi, putKeepalive, runAgent, type AgentEvent } from "./api";
 import {
-  alignGroupDepth, bodyOf, bringIntoView, cameraMoved, clampCamera, compileView, dragInView, estimateBodies, moveTargets, projectLayout, rebaseCamera,
+  alignGroupDepth, bodyOf, bringIntoView, cameraMoved, clampCamera, compileView, dragInView, estimateBodies, itemFromView, moveTargets, projectLayout, rebaseCamera,
   type CamHold, type MoveResult, type MoveScope,
 } from "./lib/camera";
 import { applyChanges, diffDocs } from "./lib/changeset";
+import { normalizeLighting, presetById, presetLighting } from "./lib/lighting";
 import { buildAssistPrompt, loadAssistPrefs, type AssistPrefs } from "./lib/assist";
 import { clampBBox, clone, deepEqual, defaultCamera, expandGroups, fitItemsToCanvas, groupNumbers, itemName, newId, normalizeDoc, pruneGroups } from "./lib/doc";
 import type {
-  AppSettings, Ask, Attachment, Camera, CompileResult, Doc, ItemLabel, LayoutDraft, LayoutItem, Message,
+  AppSettings, Ask, Attachment, BBox, Camera, CompileResult, Doc, ItemLabel, LayoutDraft, LayoutItem, Lighting, Message,
   Page, Proposal, Series, Session, SkillsState, Step,
 } from "./types";
 
-export type Modal = null | "settings" | "skills" | "reverse" | "archive" | "revisions" | "quick";
+export type Modal = null | "settings" | "skills" | "reverse" | "archive" | "revisions" | "quick" | "draft";
 export type Tool = "select" | "draw";
 
 export interface Toast {
@@ -34,6 +35,7 @@ export const DEFAULT_QUICK: QuickAction[] = [
   { id: "q3", label: "按视角改描述", prompt: "按当前镜头（机位、俯仰、朝向、景别）改写整体描述和各框描述：写清楚能看到哪一面、朝向和透视关系。不要改框位。" },
   { id: "q4", label: "整理图层", prompt: "按远近关系整理图层顺序（背景在前、前景在后），并给每个框起一个简短的中文名称。" },
   { id: "q5", label: "同系列新页", prompt: "基于当前页的角色设定和画风，在同一系列里新建一页变体构图（换一个机位或情节），写好完整布局。" },
+  { id: "q7", label: "按灯光改描述", prompt: "按当前灯光设置（主光方向、色温、软硬、氛围）改写整体描述和各框描述：写清楚受光面、阴影落在哪一侧、高光和轮廓光的位置与颜色。不要改框位。" },
   { id: "q6", label: "写成 Caption", prompt: "把当前 Layout 写成一段完整连贯的 Caption 散文，写入当前页的 Caption。" },
 ];
 
@@ -43,6 +45,12 @@ export interface SendOpts {
   attachments?: Attachment[];
   selection?: string[];
   replaceFromSeq?: number | null;
+  /** 服务端运行模式：draft = AI 起稿 */
+  mode?: string | null;
+  /** 完成后自动采纳本轮改动（并切到被改动 / 新建的页面） */
+  autoAccept?: boolean;
+  /** 完成后自动编译 */
+  compileAfter?: boolean;
 }
 
 export interface Streaming {
@@ -442,7 +450,7 @@ export function select(ids: string[]) {
   set({ selection: ids });
 }
 
-export function addItem(bbox: number[], label?: ItemLabel) {
+export function addItem(bbox: number[], label?: ItemLabel, extra?: Partial<LayoutItem>, camera?: Camera) {
   const doc = get().doc;
   if (!doc) return;
   const L = doc.layout;
@@ -451,13 +459,26 @@ export function addItem(bbox: number[], label?: ItemLabel) {
   const used = new Set(L.items.map((x) => x.color));
   let color = L.items.length % 6;
   for (let c = 0; c < 6; c++) if (!used.has(c)) { color = c; break; }
+  // 移过机位后画的世界框：bbox 是基准机位下的位置，可能在画布外，不能夹到画布里
+  const world = !!extra?.body && (extra.body.anchor || "world") === "world" && cameraMoved(L);
   const it: LayoutItem = {
-    id, label: lab, caption: "", bbox: clampBBox(bbox, L.width, L.height), color, depth: "auto",
+    id, label: lab, caption: "", bbox: world ? (bbox.map((v) => Math.round(v)) as LayoutItem["bbox"]) : clampBBox(bbox, L.width, L.height), color, depth: "auto",
     ...(lab === "text" ? { text: "" } : {}),
+    ...(extra || {}),
   };
-  editLayout((d) => ({ ...d, items: [...d.items, it] }));
+  editLayout((d) => ({ ...d, items: [...d.items, it], ...(camera ? { camera } : {}) }));
   set({ selection: [id] });
   return id;
+}
+
+/** 在镜头视图里画的框：按当前机位反推成 3D 体块（主体变了同时补偿机位，画面不跳） */
+export function addItemInView(rect: BBox, start?: { x: number; y: number }, label?: ItemLabel) {
+  const doc = get().doc;
+  if (!doc) return;
+  const lab = label || get().drawLabel;
+  const r = itemFromView(doc.layout, rect, lab, start);
+  if (!r) return addItem(rect, lab);
+  return addItem(r.bbox, lab, { body: r.body }, r.camera);
 }
 
 export function updateItem(id: string, patch: Partial<LayoutItem>, coalesce?: string) {
@@ -705,6 +726,77 @@ export function bakeCamera() {
 export function reestimateBodies() {
   editLayout((d) => estimateBodies(d));
   toast("已按框的位置与大小重新估算体块", "ok");
+}
+
+// ---------- 灯光 ----------
+export function setLighting(patch: Partial<Lighting> | ((lg: Lighting) => Partial<Lighting>), coalesce = "lighting") {
+  editLayout((d) => {
+    const cur = normalizeLighting(d.lighting);
+    const p = typeof patch === "function" ? patch(cur) : patch;
+    return { ...d, lighting: normalizeLighting({ ...cur, ...p }) };
+  }, coalesce);
+}
+
+export function applyLightingPreset(id: string) {
+  const p = presetById(id);
+  if (!p) return;
+  editLayout((d) => ({ ...d, lighting: presetLighting(id, d.camera, normalizeLighting(d.lighting)), prompt_options: { depth: true, perspective: false, camera: true, ...d.prompt_options, lighting: true } }));
+}
+
+/** 切换「灯光跟随镜头」：保持当前画面里的光向不变，换算方位 */
+export function setLightingFollow(follow: boolean) {
+  editLayout((d) => {
+    const lg = normalizeLighting(d.lighting);
+    if (lg.follow === follow) return d;
+    const o = d.camera?.enabled ? d.camera.orbit || 0 : 0;
+    const k = follow ? -o : o;
+    const wrap = (a: number) => ((((a + 180) % 360) + 360) % 360) - 180;
+    return { ...d, lighting: normalizeLighting({ ...lg, follow, lights: lg.lights.map((l) => ({ ...l, azimuth: wrap(l.azimuth + k) })) }) };
+  });
+}
+
+// ---------- AI 起稿 ----------
+export interface DraftOpts {
+  text: string;
+  canvas: "keep" | "ai" | { w: number; h: number };
+  mode: "replace" | "append" | "page";
+  camera: boolean;
+  lighting: boolean;
+  autoAccept: boolean;
+}
+
+export function buildDraftPrompt(o: DraftOpts, doc: Doc): string {
+  const L = doc.layout;
+  const lines = [`【AI 起稿】根据下面的画面描述生成完整布局（定位框 + 每个框的描述 + 整体描述）。`, "", `画面描述：${o.text.trim()}`, ""];
+  lines.push(
+    o.mode === "replace" ? "写入方式：替换当前页的布局（replace_layout）。"
+      : o.mode === "append" ? "写入方式：追加到当前页（add_items），已有的框不要动。"
+        : "写入方式：在当前系列新建一页（create_page），再在新页写布局。",
+  );
+  if (o.mode === "append") lines.push(`画布：保持当前 ${L.width}×${L.height}。`);
+  else if (o.canvas === "ai") lines.push("画布：由 AI 决定（按内容选竖幅 / 横幅 / 方形）。");
+  else if (o.canvas === "keep") lines.push(`画布：保持当前 ${L.width}×${L.height}。`);
+  else lines.push(`画布：${o.canvas.w}×${o.canvas.h}（resize_canvas=true）。`);
+  lines.push(o.camera ? "机位：打开摄像机，按描述设置机位（没提就平视）。" : "机位：不用设置。");
+  lines.push(o.lighting ? "灯光：按场景选合适的打光预设并打开灯光。" : "灯光：不用设置。");
+  return lines.join("\n");
+}
+
+export function draftLayout(o: DraftOpts): boolean {
+  const s = get();
+  if (!s.doc || !o.text.trim()) return false;
+  if (s.settings && !s.settings.api_key_set && !(s.settings.api_key || "").trim()) {
+    toast("先在「设置」里填写接口地址和 API Key，才能 AI 起稿", "err");
+    set({ modal: "settings" });
+    return false;
+  }
+  if (s.doc.kind !== "layout" && o.mode !== "page") {
+    toast("当前是 Caption 页，起稿会新建一页 Layout", "info");
+    o = { ...o, mode: "page" };
+  }
+  if (s.streaming) toast("Agent 正在回复，已加入队列", "info");
+  send(buildDraftPrompt(o, s.doc), { quick: "AI 起稿", mode: "draft", autoAccept: o.autoAccept, compileAfter: o.autoAccept, selection: [] });
+  return true;
 }
 
 // ---------- 编译 ----------
@@ -989,7 +1081,7 @@ async function run(text: string, opts: SendOpts) {
     await runAgent(sid, {
       page_id: s.pageId, doc, view, message: text, selection: opts.selection || [], skill_ids: opts.skillIds || [],
       attachments: (opts.attachments || []).map((a) => a.id), replace_from_seq: opts.replaceFromSeq ?? null,
-      quick: opts.quick ?? null,
+      quick: opts.quick ?? null, mode: opts.mode ?? null,
     }, onEvent, ctrl.signal);
   } catch (e) {
     if (!ctrl.signal.aborted) {
@@ -1013,8 +1105,14 @@ async function run(text: string, opts: SendOpts) {
   }
   // 自动采纳
   const fm = final as Message | null;
-  if (fm && get().autoApprove) {
-    for (const p of fm.meta.proposals || []) if (p.status === "pending") await resolveProposal(fm.id, p.page_id, "accepted");
+  if (fm && (get().autoApprove || opts.autoAccept)) {
+    const props = (fm.meta.proposals || []).filter((p) => p.status === "pending");
+    for (const p of props) await resolveProposal(fm.id, p.page_id, "accepted");
+    if (opts.autoAccept && props.length) {
+      const target = props.find((p) => p.page_id !== get().pageId && get().series.some((se) => se.pages.some((x) => x.id === p.page_id)));
+      if (target && props.every((p) => p.page_id !== get().pageId)) await selectPage(target.page_id);
+      if (opts.compileAfter && get().doc?.kind === "layout") void compileNow(false);
+    }
   }
   const q = get().queue;
   if (q.length) {
@@ -1033,6 +1131,7 @@ export function rerun(m: Message, newText?: string) {
   const meta = m.meta || {};
   send(newText ?? m.content, {
     replaceFromSeq: m.seq, quick: meta.quick, skillIds: meta.skill_ids, selection: meta.selection,
+    mode: meta.quick === "AI 起稿" ? "draft" : null,
     attachments: (meta.attachments || []).map((id) => ({ id, name: id, mime: "image/*" })),
   });
 }

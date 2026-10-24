@@ -65,7 +65,7 @@ function CanvasSize() {
 function PageSection() {
   const doc = useStore((s) => s.doc!);
   const L = doc.layout;
-  const po = L.prompt_options || { depth: true, perspective: false, camera: true };
+  const po = L.prompt_options || { depth: true, perspective: false, camera: true, lighting: true };
   const setKind = (k: "layout" | "caption") => commit({ ...doc, kind: k });
   return (
     <Section id="page" title="页面">
@@ -105,6 +105,10 @@ function PageSection() {
             </label>
             <label className="opt-row" title="摄像机开启时，把镜头语言追加到整体描述">
               <Switch warm on={po.camera} onChange={(v) => editLayout((d) => ({ ...d, prompt_options: { ...po, camera: v } }))} />写入镜头语言
+            </label>
+            <label className="opt-row" title="灯光开启时（镜头调度 → 灯光），把灯光描述追加到整体描述">
+              <Switch warm on={po.lighting !== false} onChange={(v) => editLayout((d) => ({ ...d, prompt_options: { ...po, lighting: v } }))} />写入灯光描述
+              {!L.lighting?.enabled && <span className="hint">（灯光未开启）</span>}
             </label>
           </div>
         </>

@@ -1,6 +1,6 @@
 import {
   Box, Camera as CameraIcon, Check, ClipboardCopy, Hand, Maximize, Minus, MousePointer2, Move3d, Play, Plus, RefreshCw,
-  Save, SquareDashed, Type, User, X, AlertTriangle, Loader2, ChevronDown, Clapperboard, Link2, Magnet,
+  Save, SquareDashed, Type, User, X, AlertTriangle, Loader2, ChevronDown, Clapperboard, Link2, Magnet, Sparkles, ArrowUp,
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
@@ -8,7 +8,7 @@ import { cameraMoved, dragInView, moveTargets, projectLayout, type Projection } 
 import { diffDocs } from "../lib/changeset";
 import { boxColor, clampBBox, groupNumbers, itemName, normalizeDoc } from "../lib/doc";
 import {
-  addItem, applyMove, autoCompileOn, bringAllIntoFrame, commit, compileNow, openDirector, pendingProposalFor, resolveProposal, select, setAutoCompile,
+  addItem, addItemInView, applyMove, autoCompileOn, bringAllIntoFrame, commit, compileNow, openDirector, pendingProposalFor, resolveProposal, select, setAutoCompile,
   setCamera, setUi, toast, updateItems, useStore, useWorkState, withGroup,
 } from "../store";
 import type { BBox, ItemLabel, LayoutDraft, LayoutItem } from "../types";
@@ -18,12 +18,44 @@ import { CameraCard } from "./CameraCard";
 import { AssistButton } from "./AssistButton";
 import { MoveModeMenu } from "./MoveMode";
 import { promptDialog } from "../dialog";
+import { openDraft, quickDraft } from "./Modals";
 
 const LABEL_ICON: Record<ItemLabel, React.ReactNode> = {
   object: <Box size={11} />,
   character: <User size={11} />,
   text: <Type size={11} />,
 };
+
+// ---------------- 空画布：AI 起稿入口 ----------------
+function EmptyBoard({ caption }: { caption: string }) {
+  const [text, setText] = useState("");
+  const streaming = useStore((st) => st.streaming);
+  const go = () => {
+    const t = text.trim() || caption.trim();
+    if (!t) return openDraft();
+    if (quickDraft(t)) setText("");
+  };
+  return (
+    <div className="board-empty">
+      <div className="draft-card" onPointerDown={(e) => e.stopPropagation()} onWheel={(e) => e.stopPropagation()}>
+        <div className="draft-card-title"><Sparkles size={14} />用一句话起稿</div>
+        <div className="draft-card-row">
+          <textarea className="textarea" rows={2} value={text} placeholder={caption.trim() ? `留空 = 用整体描述：${caption.trim().slice(0, 40)}` : "例如：雨夜街头，穿风衣的女侦探站在左侧回头看，右后方是霓虹招牌"}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); go(); } }} />
+          <button type="button" className="btn btn-primary btn-icon draft-go" onClick={go} disabled={!text.trim() && !caption.trim()} title="生成定位框和提示词（Enter）">
+            {streaming ? <Loader2 size={15} className="spin" /> : <ArrowUp size={15} />}
+          </button>
+        </div>
+        <div className="draft-card-foot">
+          <button type="button" className="btn btn-ghost btn-xs" onClick={() => openDraft(text)}>更多选项…</button>
+          <span className="spacer" />
+          <span><SquareDashed size={12} /> 或按 <kbd>B</kbd> 手动拖拽画框</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ---------------- 工具条 ----------------
 function Toolbar({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => void }) {
@@ -59,7 +91,11 @@ function Toolbar({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => void
       <button type="button" className="btn btn-sm btn-warm" onClick={openDirector} title="全屏镜头调度：画框外的内容也看得到，支持自动取景、跟随主体、俯视图（F）">
         <Clapperboard size={14} /><span className="bar-lbl2">镜头调度</span>
       </button>
+      <button type="button" className="btn btn-sm btn-agent" onClick={() => openDraft()} title="AI 起稿：用一段文字描述画面，自动生成定位框、每个框的描述、机位和灯光">
+        <Sparkles size={14} /><span className="bar-lbl2">AI 起稿</span>
+      </button>
       <div className="spacer" />
+      <div className="bar-right">
       <div className="zoom-group">
         <button type="button" className="btn btn-ghost btn-xs btn-icon" onClick={() => setZoom(Math.max(0.25, zoom / 1.25))} title="缩小"><Minus size={13} /></button>
         <button type="button" className="btn btn-ghost btn-xs zoom-val num" onClick={() => setZoom(1)} title="适应窗口">{zoom === 1 ? "适应" : `${Math.round(zoom * 100)}%`}</button>
@@ -69,6 +105,7 @@ function Toolbar({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => void
       <button type="button" className="btn btn-sm btn-primary" onClick={() => void compileNow(true)} title="编译成 MOSS 提示词（Ctrl+Enter）">
         {s.compiling ? <Loader2 size={14} className="spin" /> : <Play size={13} />}编译
       </button>
+      </div>
     </div>
   );
 }
@@ -190,6 +227,8 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
 
   const onBoxDown = (e: React.PointerEvent, it: LayoutItem) => {
     if (e.button !== 0) return;
+    // 画框工具：在已有的框上也能直接拖出新框（事件交给画布处理）
+    if (s.tool === "draw" && !s.freeCam) return;
     e.stopPropagation();
     if (s.freeCam) return startOrbit(e);
     // 点一个框 = 选中整组；Alt 只选它自己（组内微调）
@@ -222,7 +261,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
     if (s.freeCam || (e.button === 1 && camOn)) return startOrbit(e);
     if (e.button !== 0) return;
     const p = toCanvas(e);
-    if (s.tool === "draw" && !moved) setDrag({ kind: "draw", x0: p.x, y0: p.y, x1: p.x, y1: p.y });
+    if (s.tool === "draw") setDrag({ kind: "draw", x0: Math.max(0, Math.min(W, p.x)), y0: Math.max(0, Math.min(H, p.y)), x1: p.x, y1: p.y });
     else setDrag({ kind: "marquee", x0: p.x, y0: p.y, x1: p.x, y1: p.y, add: e.shiftKey });
   };
 
@@ -291,8 +330,11 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
       setGuides({ gx: [], gy: [] });
       if (d?.kind === "draw") {
         const b = clampBBox([d.x0, d.y0, d.x1, d.y1], W, H, 8);
-        if ((b[2] - b[0]) * scale > 6 && (b[3] - b[1]) * scale > 6) addItem(b);
-        else select([]);
+        if ((b[2] - b[0]) * scale > 6 && (b[3] - b[1]) * scale > 6) {
+          // 镜头视图：按当前机位反推原框和远近，画出来的就是在画面里看到的
+          if (moved) addItemInView(b, { x: d.x0, y: d.y0 });
+          else addItem(b);
+        } else select([]);
       } else if (d?.kind === "marquee") {
         const x1 = Math.min(d.x0, d.x1), x2 = Math.max(d.x0, d.x1), y1 = Math.min(d.y0, d.y1), y2 = Math.max(d.y0, d.y1);
         if ((x2 - x1) * scale < 4 && (y2 - y1) * scale < 4) select(d.add ? s.selection : []);
@@ -451,7 +493,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
     <div ref={wrap} className="tray-wrap">
     <div
       ref={tray}
-      className={cx("tray", s.freeCam && "freecam", s.tool === "draw" && !moved && "tool-draw", drag?.kind === "orbit" && "orbiting")}
+      className={cx("tray", s.freeCam && "freecam", s.tool === "draw" && "tool-draw", drag?.kind === "orbit" && "orbiting")}
       onPointerDown={onEmptyDown}
       onContextMenu={(e) => s.freeCam && e.preventDefault()}
     >
@@ -462,10 +504,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
           {svg}
           {boxes}
           {!L.items.length && (
-            <div className="board-empty">
-              <SquareDashed size={22} />
-              <div>按 <kbd>B</kbd> 拖拽画框，或在右侧让 Agent 起稿</div>
-            </div>
+            <EmptyBoard caption={L.summary.caption} />
           )}
         </div>
         <div className="board-caption num" style={{ width: bw }}>

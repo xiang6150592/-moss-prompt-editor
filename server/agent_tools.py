@@ -29,6 +29,22 @@ _ITEM_PROPS = {
     "palette": {"type": "array", "items": {"type": "string"}},
     "depth": {"type": "string", "enum": ["auto", "fg", "mg", "bg"], "description": "前景/中景/背景"},
     "body": _BODY,
+    "group": {"type": "string", "description": "成组：同一个组名的框是一体的（人物和手里的道具），空串=解散"},
+}
+
+_LIGHT = {
+    "type": "object",
+    "properties": {
+        "role": {"type": "string", "enum": ["key", "fill", "rim", "bg", "practical"],
+                 "description": "key 主光 / fill 补光 / rim 轮廓光 / bg 背景光 / practical 画面里看得见的实景光源（灯、蜡烛、霓虹）"},
+        "azimuth": {"type": "number", "description": "相对当前机位的方位（度）：0=从镜头方向照（正面光），-90=画面左侧，90=画面右侧，±180=主体正后方（逆光）"},
+        "elevation": {"type": "number", "description": "高度角（度）：0=平视高度，45=斜上方，85=顶光，负值=底光"},
+        "intensity": {"type": "number", "description": "强度 0–2，1=正常"},
+        "kelvin": {"type": "number", "description": "色温 K：1900 烛光、2800 夕阳、3200 钨丝灯、5600 日光、8000+ 冷蓝；要彩色光时不填，改填 color"},
+        "color": {"type": "string", "description": "彩色光 #rrggbb（如霓虹 #ff2e88）"},
+        "softness": {"type": "number", "description": "0=硬光（清晰阴影）… 1=柔光（漫射）"},
+        "enabled": {"type": "boolean"},
+    },
 }
 
 
@@ -78,6 +94,25 @@ TOOLS: list[dict] = [
         "distance": {"type": "number", "description": "距离倍数，1=初始，<1 推近，>1 拉远"},
         "fov": {"type": "number", "description": "视角（度，10..120），50=标准，大=广角，小=长焦"},
         "pan_x": {"type": "number"}, "pan_y": {"type": "number"}, "pan_z": {"type": "number"},
+    }),
+    _fn("set_lighting", "设置灯光（镜头调度里的灯光），编译时会把灯光描述追加到整体描述。可以只给 preset 套用预设，"
+        "也可以用 lights 整体重写灯位、用 update_lights 改某几盏灯。方位都相对当前机位。", {
+        "enabled": {"type": "boolean", "description": "默认 true"},
+        "preset": {"type": "string", "description": "预设 id 或中文名：natural 自然光、rembrandt 伦勃朗光、butterfly 蝴蝶光、loop 环形光、split 分割光、"
+                   "three_point 三点布光、rim 轮廓光、backlight 逆光、silhouette 剪影、golden_hour 黄金时刻、blue_hour 蓝调时刻、"
+                   "overcast 阴天柔光、window 窗户光、top 顶光、under 底光、moonlight 月光、neon 霓虹、candle 烛光、spotlight 舞台聚光、"
+                   "high_key 高调光、low_key 低调光、noon 正午硬光"},
+        "lights": {"type": "array", "items": _LIGHT, "description": "整体重写所有灯（最多 8 盏）"},
+        "update_lights": {"type": "array", "items": {"type": "object", "properties": {
+            "ref": {"type": "string", "description": "灯的 id 或角色（key/fill/rim/bg/practical）"}, **_LIGHT["properties"]},
+            "required": ["ref"]}},
+        "remove_lights": {"type": "array", "items": {"type": "string"}, "description": "要删除的灯 id 或角色"},
+        "ambient": {"type": "number", "description": "环境光 0–1（0.05 很暗的低调，0.35 正常，0.8 明亮高调）"},
+        "ambient_kelvin": {"type": "number", "description": "环境光色温 K"},
+        "extras": {"type": "array", "items": {"type": "string"}, "description": "氛围效果：volumetric 体积光、haze 薄雾、flare 镜头光晕、"
+                   "bokeh 背景光斑、shadows 清晰投影、blinds 百叶窗光影、dappled 树影斑驳、wet 湿地反光、bloom 柔光辉光、caustics 水波焦散"},
+        "note": {"type": "string", "description": "补充的光线描述，原样追加（和整体描述同一种语言）"},
+        "follow_camera": {"type": "boolean", "description": "true=灯跟着机位转；false（默认）=灯固定在场景里"},
     }),
     _fn("set_bodies", "给框设置 3D 体块（远近 z、厚度、朝向 yaw、锚定方式），框位与描述不变。", {
         "bodies": {"type": "array", "items": {"type": "object", "properties": {
@@ -207,6 +242,17 @@ def brief_args(name: str, args: dict) -> str:
         return "、".join(nm(x) for x in (args.get("bodies") or [])[:6])
     if name == "set_camera":
         return " ".join(f"{k}={v}" for k, v in args.items())[:80]
+    if name == "set_lighting":
+        bits = []
+        if args.get("preset"):
+            bits.append(str(args["preset"]))
+        if isinstance(args.get("lights"), list):
+            bits.append(f"{len(args['lights'])} 盏灯")
+        if isinstance(args.get("update_lights"), list):
+            bits.append("调整 " + "、".join(str((x or {}).get("ref", ""))[:10] for x in args["update_lights"][:4]))
+        if args.get("enabled") is False:
+            bits.append("关闭")
+        return " · ".join(bits)[:80]
     if name in ("create_page", "switch_page", "view_page"):
         return str(args.get("name") or args.get("page") or "")[:30]
     if name == "ask_user":
@@ -217,6 +263,6 @@ def brief_args(name: str, args: dict) -> str:
 TOOL_LABELS = {
     "update_summary": "改整体描述", "add_items": "新增框", "update_items": "修改框", "remove_items": "删除框",
     "reorder_items": "调整图层", "replace_layout": "写入布局", "set_canvas_size": "改画布尺寸",
-    "set_camera": "调整机位", "set_bodies": "估算体块", "set_caption": "写 Caption", "create_page": "新建页面",
+    "set_camera": "调整机位", "set_lighting": "调整灯光", "set_bodies": "估算体块", "set_caption": "写 Caption", "create_page": "新建页面",
     "switch_page": "切换页面", "view_page": "查看页面", "ask_user": "提问",
 }

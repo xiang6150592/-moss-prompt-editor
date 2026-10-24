@@ -33,7 +33,7 @@ VENDOR = RES_ROOT / "vendor"
 SKILL_COMPILE = VENDOR / "moss-image-prompt-enhancer" / "scripts" / "compile_prompt.py"
 CAPTION_PROMPT_PATH = VENDOR / "docs" / "CAPTION_PROMPT_ZH.md"
 
-APP_VERSION = "2.3.0"
+APP_VERSION = "2.4.0"
 
 
 def now_iso() -> str:

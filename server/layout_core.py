@@ -8,6 +8,7 @@ import re
 from typing import Any, Optional
 
 from .config import SKILL_COMPILE
+from .lighting import lighting_phrase, sanitize_lighting
 
 _spec = importlib.util.spec_from_file_location("compile_prompt", SKILL_COMPILE)
 _compile_mod = importlib.util.module_from_spec(_spec)
@@ -144,17 +145,21 @@ def _sanitize_layout_draft(draft: dict, width: int | None = None, height: int | 
             "depth": opts.get("depth") is not False,
             "perspective": bool(opts.get("perspective")),
             "camera": opts.get("camera") is not False,
+            "lighting": opts.get("lighting") is not False,
         }
     cam = sanitize_camera(draft.get("camera"))
     if cam is not None:
         out["camera"] = cam
+    lg = sanitize_lighting(draft.get("lighting"))
+    if lg is not None:
+        out["lighting"] = lg
     return out
 
 
 # ---------- 编辑器元数据（图层 / 景深 / 透视）----------
 # 这些字段只给编辑器用：草稿与历史里保留，编译前剥离，不进入官方 schema。
 EDITOR_ITEM_KEYS = ("id", "name", "hidden", "locked", "depth", "color", "body", "group")
-EDITOR_ROOT_KEYS = ("perspective", "prompt_options", "camera")
+EDITOR_ROOT_KEYS = ("perspective", "prompt_options", "camera", "lighting")
 DEPTH_TIERS = ("auto", "fg", "mg", "bg")
 
 
@@ -571,12 +576,14 @@ def prepare_layout_for_compile(draft: dict, view: Any = None) -> dict:
     - prompt_options.depth（默认开）→ 前后关系短语追加到各框 caption
     - prompt_options.camera（默认开）→ 镜头语言追加到 summary.caption
     - prompt_options.perspective（默认关）→ 透视短语（摄像机开启时由镜头语言代替）
-    - 剥离 id/name/hidden/locked/depth/color/body、perspective、prompt_options、camera
+    - prompt_options.lighting（默认开）+ lighting.enabled → 灯光描述追加到 summary.caption
+    - 剥离 id/name/hidden/locked/depth/color/body/group、perspective、prompt_options、camera、lighting
     """
     opts = draft.get("prompt_options") if isinstance(draft.get("prompt_options"), dict) else {}
     use_depth = opts.get("depth") is not False
     use_persp = bool(opts.get("perspective"))
     use_cam = opts.get("camera") is not False
+    use_light = opts.get("lighting") is not False
     cam_on = camera_active(draft)
     if cam_on and view is not None:
         draft = apply_view(draft, view)
@@ -599,6 +606,10 @@ def prepare_layout_for_compile(draft: dict, view: Any = None) -> dict:
     elif use_persp and isinstance(draft.get("perspective"), dict):
         summary["caption"] = _append_sentence(
             summary["caption"], perspective_phrase(draft["perspective"], draft["width"], draft["height"], zh)
+        )
+    if use_light and isinstance(draft.get("lighting"), dict):
+        summary["caption"] = _append_sentence(
+            summary["caption"], lighting_phrase(draft["lighting"], draft.get("camera") if cam_on else None, zh)
         )
     return {k: v for k, v in draft.items() if k not in EDITOR_ROOT_KEYS} | {
         "summary": summary,

@@ -1056,3 +1056,197 @@ export function alignGroupDepth(d: LayoutDraft, ids: string[]): { patches: Recor
   });
   return { patches, aligned };
 }
+
+/**
+ * 镜头视图里画新框：rect 是在当前画面里拖出来的矩形。
+ * 文字框直接贴在画面上；其余做成 3D 体块——深度取起点下最上层体块的深度（没有就取主体那么远），
+ * 再微调原框，让它在当前镜头下的投影正好是 rect。主体深度因此变了时同时给出补偿后的机位（镜头光心不动）。
+ */
+export function itemFromView(d: LayoutDraft, rect: BBox, label: LayoutItem["label"], start?: { x: number; y: number }): { bbox: BBox; body: Body; camera?: Camera } | null {
+  if (label === "text") return { bbox: round2(rect), body: { z: 1, thickness: 0.05, yaw: 0, anchor: "screen" } };
+  const W = d.width, H = d.height;
+  const F0 = f0(H);
+  const cam = clampCamera(d.camera || defaultCamera());
+  const pz = subjectZ(d);
+  const fr = makeFrame(cam, W, H, pz);
+  const fb = makeFrame(defaultCamera(), W, H, pz);
+  const pr = projectLayout(d, cam);
+  // 深度：起点下最上层的 3D 体块
+  let depth = dot(sub([0, 0, F0 * pz], fr.C), fr.fwd);
+  if (start) {
+    for (let k = pr.order.length - 1; k >= 0; k--) {
+      const p = pr.items[pr.order[k]];
+      const it = d.items.find((x) => x.id === p.id);
+      if (!it || it.hidden || p.anchor !== "world" || !p.visible || !(p.depth > fr.near)) continue;
+      const b = p.raw;
+      if (start.x >= b[0] && start.x <= b[2] && start.y >= b[1] && start.y <= b[3]) {
+        depth = p.depth;
+        break;
+      }
+    }
+  }
+  if (!(depth > fr.near * 2)) depth = F0 * pz;
+  const thick = label === "character" ? 0.45 : 0.3;
+  const body0: Body = { z: 1, thickness: thick, yaw: Math.round(wrapDeg(cam.orbit) * 10) / 10, anchor: "world" };
+  const c = centerOf(rect);
+  const ray: V3 = add(fr.fwd, add(mul(fr.right, (c.x - W / 2) / fr.f), mul(fr.down, (c.y - H / 2) / fr.f)));
+  const P = add(fr.C, mul(ray, depth));
+  const Ww = ((rect[2] - rect[0]) * depth) / fr.f;
+  const Hw = ((rect[3] - rect[1]) * depth) / fr.f;
+  const z = Math.round(clamp((P[2] - (thick * Ww) / 2) / F0, 0.15, 20) * 1e4) / 1e4;
+  const body: Body = { ...body0, z };
+  const bw = Ww / z, bh = Hw / z;
+  const cx = P[0] / z + W / 2, cy = P[1] / z + H / 2;
+  let bb: BBox = [cx - bw / 2, cy - bh / 2, cx + bw / 2, cy + bh / 2];
+  const probe: LayoutItem = { id: "__new", label, caption: "", bbox: bb, color: 0, depth: "auto", body } as LayoutItem;
+  const f = (x: BBox) => {
+    if (!(x[2] - x[0] > 1 && x[3] - x[1] > 1)) return null;
+    const r = projectWorldItem({ ...probe, bbox: x }, body, W, H, fr, fb);
+    return r.item.corners && r.item.corners.every(Boolean) ? r.item.raw : null;
+  };
+  const err = (r: BBox | null) => (r ? Math.max(...r.map((v, i) => Math.abs(v - rect[i]))) : Infinity);
+  let cur = f(bb), e0 = err(cur);
+  for (let k = 0; k < 14 && cur && e0 > 0.05; k++) {
+    const J: number[][] = [[], [], [], []];
+    let ok = true;
+    for (let j = 0; j < 4 && ok; j++) {
+      const h = Math.max(0.25, (bb[2] - bb[0]) * 1e-3);
+      const b2 = [...bb] as BBox; b2[j] += h;
+      const r = f(b2);
+      if (!r) { ok = false; break; }
+      for (let i = 0; i < 4; i++) J[i][j] = (r[i] - cur[i]) / h;
+    }
+    if (!ok) break;
+    const step = solve4(J, cur.map((v, i) => rect[i] - v));
+    if (!step) break;
+    let lam = 1, moved = false;
+    for (let t = 0; t < 8; t++, lam /= 2) {
+      const nb = bb.map((v, i) => v + step[i] * lam) as BBox;
+      const r = f(nb), e = err(r);
+      if (e < e0) { bb = nb; cur = r; e0 = e; moved = true; break; }
+    }
+    if (!moved) break;
+  }
+  if (!cur) return null;
+  const out: { bbox: BBox; body: Body; camera?: Camera } = { bbox: round2(bb), body };
+  // 新框成了主体：主体深度变了，补偿机位让画面不跳
+  const after: LayoutDraft = { ...d, items: [...d.items, { ...probe, bbox: out.bbox }] };
+  const pz1 = subjectZ(after);
+  if (Math.abs(pz1 - pz) > 1e-9 && d.camera) out.camera = cameraAt(d.camera, W, H, pz1, fr.C);
+  return out;
+}
+
+// ---------- 3D 场景（镜头调度室的自由视角 / 光影预览） ----------
+
+export interface SceneItem {
+  id: string;
+  anchor: Anchor;
+  /** 8 个角点（世界坐标，顺序同 cubeCorners）；贴屏框是画框平面上的 4 个点 */
+  pts: V3[];
+  center: V3;
+  body: Body;
+  /** 前、后、左、右、上、下 6 个面的角点下标（朝外的绕序不保证，用 faceNormal 判断） */
+}
+
+export interface SceneFrame {
+  C: V3;
+  right: V3;
+  down: V3;
+  fwd: V3;
+  f: number;
+  W: number;
+  H: number;
+}
+
+export interface SceneData {
+  items: SceneItem[];
+  frame: SceneFrame;
+  base: SceneFrame;
+  pivot: V3;
+  D0: number;
+  F0: number;
+  /** 地面高度（世界 y，向下为正）：主体底边 */
+  ground: number;
+  /** 画框平面离镜头的距离（贴屏框画在这里） */
+  planeDepth: number;
+  /** 场景尺度：1 米对应的世界单位（见 sceneMeter） */
+  meter: number;
+}
+
+export const CUBE_FACES: number[][] = [
+  [0, 1, 2, 3], [5, 4, 7, 6], [4, 0, 3, 7], [1, 5, 6, 2], [4, 5, 1, 0], [3, 2, 6, 7],
+];
+
+/** 面的朝外法线（单位向量） */
+export function faceNormal(pts: V3[], face: number[], center: V3): V3 {
+  const a = pts[face[0]], b = pts[face[1]], c = pts[face[2]], e = pts[face[3]];
+  let n = cross(sub(c, a), sub(e, b));
+  if (Math.hypot(n[0], n[1], n[2]) < 1e-9) n = cross(sub(b, a), sub(c, a));
+  n = norm(n);
+  const fc = mul(add(add(a, b), add(c, e)), 0.25);
+  return dot(n, sub(fc, center)) < 0 ? mul(n, -1) : n;
+}
+
+const toSceneFrame = (fr: Frame): SceneFrame => ({ C: fr.C, right: fr.right, down: fr.down, fwd: fr.fwd, f: fr.f, W: fr.W, H: fr.H });
+
+/** 画框（拍摄镜头）上一点 (u, v) 在深度 depth 处的世界坐标 */
+export function framePoint(fr: SceneFrame, u: number, v: number, depth: number): V3 {
+  return add(fr.C, mul(add(fr.fwd, add(mul(fr.right, (u - fr.W / 2) / fr.f), mul(fr.down, (v - fr.H / 2) / fr.f))), depth));
+}
+
+/** 场景尺度：在主体那么远（z = 1）处，占画面高度 60% 的人约 1.8 m。只和画布高度有关，改体块时单位不会跟着变 */
+export const sceneMeter = (d: LayoutDraft) => d.height / 3;
+
+export function sceneData(d: LayoutDraft, camIn?: Camera): SceneData {
+  const cam = clampCamera(camIn || d.camera || defaultCamera());
+  const W = d.width, H = d.height;
+  const F0 = f0(H);
+  const pz = subjectZ(d);
+  const D0 = F0 * pz;
+  const fr = toSceneFrame(makeFrame(cam, W, H, pz));
+  const fb = toSceneFrame(makeFrame(defaultCamera(), W, H, pz));
+  const pivot: V3 = [0, 0, D0];
+  const pd = dot(sub(pivot, fr.C), fr.fwd);
+  const planeDepth = pd > D0 * 0.05 ? pd : D0;
+  const items: SceneItem[] = [];
+  for (const it of d.items) {
+    const b = bodyOf(it, d);
+    if (b.anchor === "screen") {
+      const [x1, y1, x2, y2] = it.bbox;
+      const pts = [framePoint(fr, x1, y1, planeDepth), framePoint(fr, x2, y1, planeDepth), framePoint(fr, x2, y2, planeDepth), framePoint(fr, x1, y2, planeDepth)];
+      items.push({ id: it.id, anchor: "screen", pts, center: framePoint(fr, (x1 + x2) / 2, (y1 + y2) / 2, planeDepth), body: b });
+      continue;
+    }
+    const bb = b.anchor === "backdrop" ? { ...b, thickness: 0 } : b;
+    const { pts, center } = cubeCorners(it, bb, W, H);
+    items.push({ id: it.id, anchor: b.anchor, pts, center, body: b });
+  }
+  const subj = subjectItem(d);
+  const sp = subj ? items.find((x) => x.id === subj.id) : undefined;
+  const ground = sp ? Math.max(...sp.pts.map((p) => p[1])) : H / 2;
+  return { items, frame: fr, base: fb, pivot, D0, F0, ground, planeDepth, meter: sceneMeter(d) };
+}
+
+/** 体块的世界尺寸（宽、高、厚，世界单位）和底面中心 */
+export function bodyMetrics(it: LayoutItem, d: LayoutDraft): { w: number; h: number; t: number; center: V3; bottom: number } {
+  const b = bodyOf(it, d);
+  const { pts, center } = cubeCorners(it, b, d.width, d.height);
+  const w = (it.bbox[2] - it.bbox[0]) * b.z, h = (it.bbox[3] - it.bbox[1]) * b.z;
+  return { w, h, t: Math.max(0, b.thickness) * w, center, bottom: Math.max(...pts.map((p) => p[1])) };
+}
+
+/**
+ * 按世界尺寸改体块：宽 / 厚保持中心不动，高保持底边不动（站在地上的东西不会浮起来）。
+ * 返回新的原框和体块（远近 z 不变；改厚度时前脸不动）。
+ */
+export function resizeBody(it: LayoutItem, d: LayoutDraft, size: { w?: number; h?: number; t?: number }): { bbox: BBox; body: Body } {
+  const b = bodyOf(it, d);
+  const z = b.z;
+  const [x1, y1, x2, y2] = it.bbox;
+  const cx = (x1 + x2) / 2;
+  const w0 = (x2 - x1) * z, h0 = (y2 - y1) * z;
+  const w = Math.max(1, size.w ?? w0), h = Math.max(1, size.h ?? h0);
+  const t = size.t ?? Math.max(0, b.thickness) * w0;
+  const nb: BBox = [cx - w / z / 2, y2 - h / z, cx + w / z / 2, y2];
+  return { bbox: round2(nb), body: { ...b, thickness: Math.round(clamp(t / w, 0, 4) * 1000) / 1000 } };
+}

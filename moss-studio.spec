@@ -15,7 +15,7 @@ a = Analysis(
     ["run_desktop.py"],
     pathex=["."],
     binaries=[],
-    datas=[("dist", "dist"), ("vendor", "vendor")] + collect_data_files("webview"),
+    datas=[("dist", "dist"), ("vendor", "vendor"), ("server/lighting_data.json", "server")] + collect_data_files("webview"),
     hiddenimports=hidden,
     hookspath=[],
     runtime_hooks=[],

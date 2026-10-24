@@ -13,6 +13,7 @@ from .agent_tools import (TOOL_LABELS, TOOLS, TagFilter, brief_args, parse_args,
                           strip_tool_tags, tags_protocol_text)
 from .config import ATTACH_DIR, load_settings
 from .layout_core import _is_cjk, camera_phrase, compile_checks
+from .lighting import lighting_phrase
 from .ops import ToolError, Workbench, describe_changes, describe_doc
 from .skills import load_skills
 
@@ -48,8 +49,28 @@ SYSTEM_BASE = """你是「MOSS 提示词工作台」的 Agent，和用户一起�
 - 摄像机开启时，框位由体块按机位投影得到（workbench 里的 view_bbox 是当前镜头下的框）。
 - 「按视角改描述」：框位、图层、可见文字都不动，只用 update_items 改写各框 caption 和 summary.caption，使其符合当前机位（比如俯拍能看到头顶与地面、仰拍能看到下巴和帽檐底面、侧面只见一只眼）。
 
+## 灯光
+- 灯光在 workbench 的 lighting 里：每盏灯有 role（key 主光 / fill 补光 / rim 轮廓光 / bg 背景光 / practical 实景光源）、azimuth（相对当前机位：0=正面，负=画面左，正=画面右，±180=主体背后）、elevation（高度角，正=从上方）、intensity、kelvin 或 color、softness（0 硬光…1 柔光），in_frame 是它在画面里的方向。
+- 用 set_lighting 改灯光：套预设（preset）、整体重写（lights）或改某几盏（update_lights）。方位都相对当前机位。
+- 灯光开启时，编译会把「当前灯光语言」追加到整体描述，所以 summary.caption 里不要再写和它矛盾的光线。
+- 「按灯光改描述」：框位、图层、文字都不动，只用 update_items / update_summary 改写描述，让亮面、阴影、高光、轮廓光、色温和灯光一致（例如主光从左上方来：左脸亮、右脸落在阴影里，地面投影朝右下）。
+
 ## 多页
 - 同一系列的页面共用这场对话。用户要多个版本/方案时，用 create_page 新建页面再写；需要参照别的页时用 view_page。
+"""
+
+DRAFT_GUIDE = """## 本轮任务：AI 起稿（根据文字描述生成布局）
+用户给了一段画面描述，你要直接把它变成完整、可编译的 Layout：自己决定所有细节，不要提问、不要只给建议。
+- 写入方式按用户消息里的要求：替换当前页 → 调用一次 replace_layout；追加到当前页 → add_items（不动已有的框）；新建一页 → 先 create_page，再 replace_layout。
+- 画布：用户说「由 AI 决定」时按内容选尺寸（人物全身 / 竖构图 1024×1536，横向场景 / 载具 / 多人 1536×1024，方形 1024×1024），在 replace_layout 里给 width/height 并设 resize_canvas=true；否则按当前画布的像素坐标写。
+- 拆框：描述里每个看得见的主体、重要道具、背景环境各一个框，一般 3–8 个。整张背景（街道、天空、房间、荒野）用一个铺满画布的框放在最底层，body.anchor=backdrop。
+- 构图：主体放在三分线附近，占画面高度 40–70%；人物全身框宽高比约 1:2.5–1:3，半身约 1:1.3；框要完整，不贴边（故意出画的前景除外）。
+- 远近：站在地面上的东西，越远底边越高（越接近地平线，地平线约在画面高度 40–45% 处）、框越小；大小按真实尺寸和远近换算（人约 1.8 m；汽车约 1.5 m 高、4.5 m 长；坦克约 3 m 高、7 m 长；房子 6–10 m 高）。「后面跟着 / 身后 / 远处」的东西在主体后方：图层更靠底（数组更靠前）、底边更高；它本身更大时框也可以比主体大。前景遮挡物在最上层。
+- 手持物 / 穿戴物（枪、剑、包、旗、杯子、头盔等）单独一个框，和持有者重叠在手（或头、背）的位置，图层放在持有者之后（更靠前），group 设成和持有者相同的组名（如 g1；没有就给两者起一个）。
+- body：每个框都写 body。z：主体 1，身后的东西按距离 1.5–4，前景 0.5–0.8；thickness：人物 0.45，物体 0.3–0.8，薄片 0.1；yaw：侧身 / 斜向时给角度（正值=向画面右侧转）；背景 anchor=backdrop，文字 / 标志 anchor=screen。
+- 描述：每个框的 caption 用英文写这个框里看得见的东西（外观、服装、材质、动作、朝向、颜色），20–60 词；summary.caption 写整张图（主体关系、场景、时间、氛围、画风），60–120 词；name 用 2–6 个字的中文。文字元素用 label=text，把要画的字写进 text。用户明确要中文描述时改用中文。
+- 机位 / 灯光：用户要求时，用 set_camera（描述里提到仰拍、俯拍、广角、特写就照做；没提就保持平视，只设 enabled=true）和 set_lighting（按场景选最合适的预设，必要时再调色温、方位、氛围）。
+- 写完用 1–3 句中文说明构图思路（谁在哪、前后远近、机位和灯光）。
 """
 
 
@@ -105,11 +126,13 @@ def _image_part(att_id: str) -> Optional[dict]:
 
 def build_messages(*, session: dict, history: list[dict], wb: Workbench, page_id: str, doc: dict,
                    view: Optional[dict], user_text: str, selection: list[str], skill_ids: list[str],
-                   attachments: list[str], protocol: str) -> tuple[list[dict], list[str]]:
+                   attachments: list[str], protocol: str, mode: Optional[str] = None) -> tuple[list[dict], list[str]]:
     s = load_settings()
     meta = session.get("meta") or {}
     kind = db.normalize_doc(doc)["kind"]
     system = SYSTEM_BASE
+    if mode == "draft":
+        system += "\n\n" + DRAFT_GUIDE
     sk = _skills_block(kind, skill_ids)
     if sk:
         system += "\n\n" + sk
@@ -141,6 +164,11 @@ def build_messages(*, session: dict, history: list[dict], wb: Workbench, page_id
         zh = _is_cjk((L.get("summary") or {}).get("caption", ""))
         ph = camera_phrase(cam, L.get("items") or [], L["width"], L["height"], zh)
         wsl.append(f"当前镜头语言（编译时会追加到整体描述）：{ph or '中性平视，无追加'}")
+    lg = L.get("lighting") or {}
+    if nd["kind"] == "layout" and isinstance(lg, dict) and lg.get("enabled"):
+        zh = _is_cjk((L.get("summary") or {}).get("caption", ""))
+        lph = lighting_phrase(lg, cam if cam.get("enabled") else None, zh)
+        wsl.append(f"当前灯光语言（编译时会追加到整体描述）：{lph or '无'}")
     others = [describe_doc(wb.base[pid], wb.names.get(pid, pid), pid, brief=True)
               for pid in wb.names if pid != page_id and pid in wb.base]
     if others:
@@ -174,7 +202,7 @@ def sse(ev: dict) -> str:
 
 async def run_agent(*, session_id: str, page_id: str, doc: dict, view: Optional[dict], message: str,
                     selection: list[str], skill_ids: list[str], attachments: list[str],
-                    replace_from_seq: Optional[int], quick: Optional[str]) -> AsyncIterator[str]:
+                    replace_from_seq: Optional[int], quick: Optional[str], mode: Optional[str] = None) -> AsyncIterator[str]:
     session = db.get_session(session_id)
     if not session:
         yield sse({"type": "error", "message": "会话不存在"})
@@ -208,7 +236,8 @@ async def run_agent(*, session_id: str, page_id: str, doc: dict, view: Optional[
     protocol = meta.get("protocol") or ("tags" if s["agent_protocol"] == "tags" else "tools")
     msgs, _manual = build_messages(session=session, history=history, wb=wb, page_id=page_id, doc=doc, view=view,
                                    user_text=message, selection=selection, skill_ids=skill_ids,
-                                   attachments=attachments, protocol=protocol)
+                                   attachments=attachments, protocol=protocol, mode=mode)
+    tools = [t for t in TOOLS if t["function"]["name"] != "ask_user"] if mode == "draft" else TOOLS
     meta.setdefault("seen", {})[page_id] = copy.deepcopy(doc)
 
     visible: list[str] = []
@@ -224,7 +253,7 @@ async def run_agent(*, session_id: str, page_id: str, doc: dict, view: Optional[
             filt = TagFilter() if protocol == "tags" else None
             done: dict = {}
             try:
-                async for kind, val in llm.stream_chat(msgs, tools=TOOLS if protocol == "tools" else None):
+                async for kind, val in llm.stream_chat(msgs, tools=tools if protocol == "tools" else None):
                     if kind == "model":
                         if val != model_used:
                             model_used = val

@@ -9,7 +9,9 @@ import uuid
 from typing import Any, Optional
 
 from . import db
-from .layout_core import sanitize_body, sanitize_camera, _ensure_wh
+from .layout_core import _is_cjk, sanitize_body, sanitize_camera, _ensure_wh
+from .lighting import (PRESET_BY_ID, PRESETS, ROLES, _wrap, default_lighting, describe_lighting, lighting_phrase,
+                       preset_lighting, sanitize_light, sanitize_lighting)
 
 LABELS = ("object", "character", "text")
 DEPTHS = ("auto", "fg", "mg", "bg")
@@ -147,6 +149,15 @@ def _apply_fields(it: dict, inp: dict, w: int, h: int, *, is_new: bool) -> list[
         if nb != it.get("bbox"):
             it["bbox"] = nb
             changed.append("位置")
+    if "group" in inp:
+        g = inp["group"]
+        g = g.strip()[:40] if isinstance(g, str) else ""
+        if g and g != it.get("group"):
+            it["group"] = g
+            changed.append("成组")
+        elif not g and it.get("group"):
+            it.pop("group", None)
+            changed.append("成组")
     if "body" in inp and isinstance(inp["body"], dict):
         nb = sanitize_body({**(it.get("body") or {}), **inp["body"]})
         if nb != it.get("body"):
@@ -477,6 +488,80 @@ class Workbench:
         return "摄像机：" + ("开启 " if cam["enabled"] else "关闭 ") + ", ".join(
             f"{k}={cam[k]}" for k in ("orbit", "pitch", "roll", "distance", "fov", "pan_x", "pan_y", "pan_z"))
 
+    def t_set_lighting(self, enabled: Any = None, preset: Any = None, lights: Any = None, update_lights: Any = None,
+                       remove_lights: Any = None, ambient: Any = None, ambient_kelvin: Any = None, extras: Any = None,
+                       note: Any = None, follow_camera: Any = None, **_: Any) -> str:
+        L = self.layout()
+        cam = L.get("camera") or {}
+        cam_on = bool(cam.get("enabled"))
+        orbit = float(cam.get("orbit") or 0) if cam_on else 0.0
+        lg = sanitize_lighting(L.get("lighting")) or default_lighting()
+        notes: list[str] = []
+        if isinstance(follow_camera, bool) and follow_camera != lg["follow"]:
+            # 切换参照系时换算存储的方位，灯在场景里不跳
+            for l in lg["lights"]:
+                l["azimuth"] = _wrap(l["azimuth"] + (-orbit if follow_camera else orbit))
+            lg["follow"] = follow_camera
+        off = 0.0 if lg["follow"] else orbit  # 工具里的方位相对当前机位，存储时换算
+        if preset not in (None, ""):
+            p = preset_lighting(preset, cam if cam_on else None, lg)
+            if not p:
+                raise ToolError("没有这个灯光预设。可用：" + "、".join(f"{x['id']}（{x['name']}）" for x in PRESETS))
+            lg = p
+            notes.append(f"套用预设「{PRESET_BY_ID[p['preset']]['name']}」")
+        manual = False
+        if isinstance(lights, list):
+            fresh = []
+            for i, x in enumerate(lights[:8]):
+                if not isinstance(x, dict):
+                    continue
+                y = dict(x)
+                if _num(y.get("azimuth")) is not None:
+                    y["azimuth"] = float(y["azimuth"]) + off
+                y.pop("id", None)
+                fresh.append(sanitize_light(y, i))
+            lg["lights"] = fresh
+            manual = True
+        if isinstance(update_lights, list):
+            for x in update_lights:
+                if not isinstance(x, dict):
+                    continue
+                ref = str(x.get("ref") or x.get("id") or x.get("role") or "").strip()
+                hit = next((l for l in lg["lights"] if l["id"] == ref), None) or next(
+                    (l for l in lg["lights"] if l["role"] == ref or ROLES.get(l["role"], {}).get("zh") == ref), None)
+                if not hit:
+                    raise ToolError(f"找不到灯「{ref}」（用灯的 id 或角色 key/fill/rim/bg/practical）")
+                y = {k: v for k, v in x.items() if k not in ("ref", "id")}
+                if _num(y.get("azimuth")) is not None:
+                    y["azimuth"] = float(y["azimuth"]) + off
+                if "color" in y and "kelvin" not in y:
+                    y["kelvin"] = None
+                hit.update(sanitize_light({**hit, **y}))
+                manual = True
+        if isinstance(remove_lights, list) and remove_lights:
+            refs = {str(r) for r in remove_lights}
+            before = len(lg["lights"])
+            lg["lights"] = [l for l in lg["lights"] if l["id"] not in refs and l["role"] not in refs]
+            manual = manual or len(lg["lights"]) != before
+        if manual and preset in (None, ""):
+            lg["preset"] = ""
+        if _num(ambient) is not None:
+            lg["ambient"] = ambient
+        if _num(ambient_kelvin) is not None:
+            lg["ambient_kelvin"] = ambient_kelvin
+        if isinstance(extras, list):
+            lg["extras"] = extras
+        if isinstance(note, str):
+            lg["note"] = note.strip()
+        lg["enabled"] = enabled if isinstance(enabled, bool) else True
+        lg = sanitize_lighting(lg)
+        L["lighting"] = lg
+        L.setdefault("prompt_options", {}).setdefault("lighting", True)
+        zh = _is_cjk((L.get("summary") or {}).get("caption", ""))
+        ph = lighting_phrase(lg, cam if cam_on else None, zh)
+        return ("灯光：" + ("开启" if lg["enabled"] else "关闭") + (f"，{'；'.join(notes)}" if notes else "")
+                + f"，{len(lg['lights'])} 盏灯。编译时追加：{ph or '（无）'}")
+
     def t_set_bodies(self, bodies: Any = None, **_: Any) -> str:
         if not isinstance(bodies, list) or not bodies:
             raise ToolError("bodies 必须是非空数组")
@@ -596,6 +681,9 @@ def describe_doc(doc: dict, name: str, pid: str, view: Optional[dict] = None, br
     cam = L.get("camera") or {}
     if cam.get("enabled"):
         out["camera"] = {k: cam.get(k) for k in ("orbit", "pitch", "roll", "distance", "fov", "pan_x", "pan_y", "pan_z")}
+    lg = describe_lighting(L.get("lighting"), cam if cam.get("enabled") else None)
+    if lg:
+        out["lighting"] = lg
     p = L.get("perspective") or {}
     if p.get("enabled"):
         out["perspective"] = {k: p.get(k) for k in ("mode", "horizon_y", "vp1_x", "vp2_x", "vp3_x", "vp3_y")}
@@ -652,4 +740,9 @@ def describe_changes(before: Optional[dict], after: dict) -> list[str]:
         out.append("调整了摄像机" + (f"（环绕{c.get('orbit')}° 俯仰{c.get('pitch')}° 视角{c.get('fov')}°）" if c.get("enabled") else "（关闭）"))
     if (bl.get("perspective") or {}) != (al.get("perspective") or {}):
         out.append("调整了透视辅助")
+    lb = sanitize_lighting(bl.get("lighting")) or default_lighting()
+    la = sanitize_lighting(al.get("lighting")) or default_lighting()
+    if lb != la:
+        pn = (PRESET_BY_ID.get(la["preset"]) or {}).get("name")
+        out.append("调整了灯光" + ("（关闭）" if not la["enabled"] else f"（{pn or '自定义'}，{len(la['lights'])} 盏灯）"))
     return out

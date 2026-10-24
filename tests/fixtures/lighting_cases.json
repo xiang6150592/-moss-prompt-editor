@@ -1,0 +1,5034 @@
+{
+ "cases": [
+  {
+   "name": "natural@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "natural",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -35,
+      "elevation": 40,
+      "intensity": 0.9,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.7
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 50,
+      "elevation": 15,
+      "intensity": 0.35,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.45,
+    "ambient_kelvin": 6500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：自然光；主光为柔和漫射的光，从左前方高处（约 40°）照来；补光为柔和漫射的光，从右前方略高处照来。反差柔和，暗部通透。",
+   "en": "Lighting: Natural daylight; soft diffused key light from the front left, high above (about 40 degrees); soft diffused fill light from the front right, slightly above. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "natural@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "natural",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -35,
+      "elevation": 40,
+      "intensity": 0.9,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.7
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 50,
+      "elevation": 15,
+      "intensity": 0.35,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.45,
+    "ambient_kelvin": 6500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：自然光；主光为柔和漫射的光，从左前方高处（约 40°）照来；补光为柔和漫射的光，从右前方略高处照来。反差柔和，暗部通透。",
+   "en": "Lighting: Natural daylight; soft diffused key light from the front left, high above (about 40 degrees); soft diffused fill light from the front right, slightly above. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "natural@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "natural",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -75,
+      "elevation": 40,
+      "intensity": 0.9,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.7
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 10,
+      "elevation": 15,
+      "intensity": 0.35,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.45,
+    "ambient_kelvin": 6500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：自然光；主光为柔和漫射的光，从左前方高处（约 40°）照来；补光为柔和漫射的光，从右前方略高处照来。反差柔和，暗部通透。",
+   "en": "Lighting: Natural daylight; soft diffused key light from the front left, high above (about 40 degrees); soft diffused fill light from the front right, slightly above. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "rembrandt@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "rembrandt",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -45,
+      "elevation": 40,
+      "intensity": 1,
+      "kelvin": 4300,
+      "color": "#ffd5b3",
+      "softness": 0.45
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 60,
+      "elevation": 5,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.8
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 4500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：伦勃朗光，暗侧脸颊上有一小块三角形光斑；主光为偏暖光，从左前方高处（约 40°）照来；补光为微弱、柔和漫射的光，从右前方平视高度照来。中等反差，阴影清晰。",
+   "en": "Lighting: Rembrandt lighting, a small triangle of light on the shadowed cheek; warm key light from the front left, high above (about 40 degrees); faint soft diffused fill light from the front right, at eye level. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rembrandt@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "rembrandt",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -45,
+      "elevation": 40,
+      "intensity": 1,
+      "kelvin": 4300,
+      "color": "#ffd5b3",
+      "softness": 0.45
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 60,
+      "elevation": 5,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.8
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 4500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：伦勃朗光，暗侧脸颊上有一小块三角形光斑；主光为偏暖光，从左前方高处（约 40°）照来；补光为微弱、柔和漫射的光，从右前方平视高度照来。中等反差，阴影清晰。",
+   "en": "Lighting: Rembrandt lighting, a small triangle of light on the shadowed cheek; warm key light from the front left, high above (about 40 degrees); faint soft diffused fill light from the front right, at eye level. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rembrandt@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "rembrandt",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -85,
+      "elevation": 40,
+      "intensity": 1,
+      "kelvin": 4300,
+      "color": "#ffd5b3",
+      "softness": 0.45
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 20,
+      "elevation": 5,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.8
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 4500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：伦勃朗光，暗侧脸颊上有一小块三角形光斑；主光为偏暖光，从左前方高处（约 40°）照来；补光为微弱、柔和漫射的光，从右前方平视高度照来。中等反差，阴影清晰。",
+   "en": "Lighting: Rembrandt lighting, a small triangle of light on the shadowed cheek; warm key light from the front left, high above (about 40 degrees); faint soft diffused fill light from the front right, at eye level. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rembrandt@3",
+   "lighting": {
+    "enabled": true,
+    "preset": "rembrandt",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 50,
+      "elevation": 40,
+      "intensity": 1,
+      "kelvin": 4300,
+      "color": "#ffd5b3",
+      "softness": 0.45
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 155,
+      "elevation": 5,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.8
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 4500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 95,
+    "pitch": -25,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：伦勃朗光，暗侧脸颊上有一小块三角形光斑；主光为偏暖光，从左前方高处（约 40°）照来；补光为微弱、柔和漫射的光，从右前方平视高度照来。中等反差，阴影清晰。",
+   "en": "Lighting: Rembrandt lighting, a small triangle of light on the shadowed cheek; warm key light from the front left, high above (about 40 degrees); faint soft diffused fill light from the front right, at eye level. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rembrandt@4",
+   "lighting": {
+    "enabled": true,
+    "preset": "rembrandt",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 135,
+      "elevation": 40,
+      "intensity": 1,
+      "kelvin": 4300,
+      "color": "#ffd5b3",
+      "softness": 0.45
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -120,
+      "elevation": 5,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.8
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 4500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 180,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：伦勃朗光，暗侧脸颊上有一小块三角形光斑；主光为偏暖光，从左前方高处（约 40°）照来；补光为微弱、柔和漫射的光，从右前方平视高度照来。中等反差，阴影清晰。",
+   "en": "Lighting: Rembrandt lighting, a small triangle of light on the shadowed cheek; warm key light from the front left, high above (about 40 degrees); faint soft diffused fill light from the front right, at eye level. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rembrandt@5",
+   "lighting": {
+    "enabled": true,
+    "preset": "rembrandt",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -45,
+      "elevation": 40,
+      "intensity": 1,
+      "kelvin": 4300,
+      "color": "#ffd5b3",
+      "softness": 0.45
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 60,
+      "elevation": 5,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.8
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 4500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": false,
+    "orbit": 30,
+    "pitch": 60,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：伦勃朗光，暗侧脸颊上有一小块三角形光斑；主光为偏暖光，从左前方高处（约 40°）照来；补光为微弱、柔和漫射的光，从右前方平视高度照来。中等反差，阴影清晰。",
+   "en": "Lighting: Rembrandt lighting, a small triangle of light on the shadowed cheek; warm key light from the front left, high above (about 40 degrees); faint soft diffused fill light from the front right, at eye level. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "butterfly@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "butterfly",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 50,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": -20,
+      "intensity": 0.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.3,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：蝴蝶光（派拉蒙光），鼻下有蝶形阴影；主光从正前方高处（约 50°）照来；补光为柔和漫射的光，从正前方低处（约 20°，由下往上）照来。反差柔和，暗部通透。",
+   "en": "Lighting: Butterfly (Paramount) lighting with a small shadow under the nose; key light from the front, high above (about 50 degrees); soft diffused fill light from the front, from below (about 20 degrees). Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "butterfly@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "butterfly",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 50,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": -20,
+      "intensity": 0.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.3,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：蝴蝶光（派拉蒙光），鼻下有蝶形阴影；主光从正前方高处（约 50°）照来；补光为柔和漫射的光，从正前方低处（约 20°，由下往上）照来。反差柔和，暗部通透。",
+   "en": "Lighting: Butterfly (Paramount) lighting with a small shadow under the nose; key light from the front, high above (about 50 degrees); soft diffused fill light from the front, from below (about 20 degrees). Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "butterfly@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "butterfly",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 50,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": -20,
+      "intensity": 0.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.3,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：蝴蝶光（派拉蒙光），鼻下有蝶形阴影；主光从正前方高处（约 50°）照来；补光为柔和漫射的光，从正前方低处（约 20°，由下往上）照来。反差柔和，暗部通透。",
+   "en": "Lighting: Butterfly (Paramount) lighting with a small shadow under the nose; key light from the front, high above (about 50 degrees); soft diffused fill light from the front, from below (about 20 degrees). Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "loop@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "loop",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -35,
+      "elevation": 30,
+      "intensity": 0.95,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 45,
+      "elevation": 5,
+      "intensity": 0.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.85
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：环形光，鼻影呈小环状；主光从左前方高处（约 30°）照来；补光为柔和漫射的光，从右前方平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Loop lighting; key light from the front left, high above (about 30 degrees); soft diffused fill light from the front right, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "loop@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "loop",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -35,
+      "elevation": 30,
+      "intensity": 0.95,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 45,
+      "elevation": 5,
+      "intensity": 0.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.85
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：环形光，鼻影呈小环状；主光从左前方高处（约 30°）照来；补光为柔和漫射的光，从右前方平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Loop lighting; key light from the front left, high above (about 30 degrees); soft diffused fill light from the front right, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "loop@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "loop",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -75,
+      "elevation": 30,
+      "intensity": 0.95,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 5,
+      "intensity": 0.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.85
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：环形光，鼻影呈小环状；主光从左前方高处（约 30°）照来；补光为柔和漫射的光，从右前方平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Loop lighting; key light from the front left, high above (about 30 degrees); soft diffused fill light from the front right, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "split@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "split",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -90,
+      "elevation": 10,
+      "intensity": 1,
+      "kelvin": 4800,
+      "color": "#ffe0c7",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：分割光，脸部一半在阴影中；主光从左侧略高处照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Split lighting, half of the face in shadow; key light from the left side, slightly above. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "split@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "split",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -90,
+      "elevation": 10,
+      "intensity": 1,
+      "kelvin": 4800,
+      "color": "#ffe0c7",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：分割光，脸部一半在阴影中；主光从左侧略高处照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Split lighting, half of the face in shadow; key light from the left side, slightly above. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "split@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "split",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -130,
+      "elevation": 10,
+      "intensity": 1,
+      "kelvin": 4800,
+      "color": "#ffe0c7",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：分割光，脸部一半在阴影中；主光从左侧略高处照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Split lighting, half of the face in shadow; key light from the left side, slightly above. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "split@3",
+   "lighting": {
+    "enabled": true,
+    "preset": "split",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 10,
+      "intensity": 1,
+      "kelvin": 4800,
+      "color": "#ffe0c7",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 95,
+    "pitch": -25,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：分割光，脸部一半在阴影中；主光从左侧略高处照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Split lighting, half of the face in shadow; key light from the left side, slightly above. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "split@4",
+   "lighting": {
+    "enabled": true,
+    "preset": "split",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 90,
+      "elevation": 10,
+      "intensity": 1,
+      "kelvin": 4800,
+      "color": "#ffe0c7",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 180,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：分割光，脸部一半在阴影中；主光从左侧略高处照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Split lighting, half of the face in shadow; key light from the left side, slightly above. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "split@5",
+   "lighting": {
+    "enabled": true,
+    "preset": "split",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -90,
+      "elevation": 10,
+      "intensity": 1,
+      "kelvin": 4800,
+      "color": "#ffe0c7",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": false,
+    "orbit": 30,
+    "pitch": 60,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：分割光，脸部一半在阴影中；主光从左侧略高处照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Split lighting, half of the face in shadow; key light from the left side, slightly above. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "three_point@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "three_point",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 35,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 45,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 150,
+      "elevation": 35,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：经典三点布光；主光从左前方高处（约 35°）照来；补光为柔和漫射的光，从右前方略高处照来；轮廓光从右后方高处（约 35°）勾勒边缘。反差柔和，暗部通透。",
+   "en": "Lighting: Classic three-point lighting; key light from the front left, high above (about 35 degrees); soft diffused fill light from the front right, slightly above; rim light from behind on the right, high above (about 35 degrees), outlining the edges. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "three_point@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "three_point",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 35,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 45,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 150,
+      "elevation": 35,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：经典三点布光；主光从左前方高处（约 35°）照来；补光为柔和漫射的光，从右前方略高处照来；轮廓光从右后方高处（约 35°）勾勒边缘。反差柔和，暗部通透。",
+   "en": "Lighting: Classic three-point lighting; key light from the front left, high above (about 35 degrees); soft diffused fill light from the front right, slightly above; rim light from behind on the right, high above (about 35 degrees), outlining the edges. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "three_point@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "three_point",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 35,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 110,
+      "elevation": 35,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：经典三点布光；主光从左前方高处（约 35°）照来；补光为柔和漫射的光，从右前方略高处照来；轮廓光从右后方高处（约 35°）勾勒边缘。反差柔和，暗部通透。",
+   "en": "Lighting: Classic three-point lighting; key light from the front left, high above (about 35 degrees); soft diffused fill light from the front right, slightly above; rim light from behind on the right, high above (about 35 degrees), outlining the edges. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "rim@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "rim",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 140,
+      "elevation": 25,
+      "intensity": 1,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": -140,
+      "elevation": 25,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t2",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 0,
+      "intensity": 0.15,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：强烈的轮廓光勾勒主体边缘；补光为微弱、柔和漫射的光，从正前方平视高度照来；轮廓光从右后方略高处勾勒边缘；轮廓光从左后方略高处勾勒边缘。中等反差，阴影清晰。",
+   "en": "Lighting: Strong rim lighting outlining the subject's edges; faint soft diffused fill light from the front, at eye level; rim light from behind on the right, slightly above, outlining the edges; rim light from behind on the left, slightly above, outlining the edges. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rim@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "rim",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 140,
+      "elevation": 25,
+      "intensity": 1,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": -140,
+      "elevation": 25,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t2",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 0,
+      "intensity": 0.15,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：强烈的轮廓光勾勒主体边缘；补光为微弱、柔和漫射的光，从正前方平视高度照来；轮廓光从右后方略高处勾勒边缘；轮廓光从左后方略高处勾勒边缘。中等反差，阴影清晰。",
+   "en": "Lighting: Strong rim lighting outlining the subject's edges; faint soft diffused fill light from the front, at eye level; rim light from behind on the right, slightly above, outlining the edges; rim light from behind on the left, slightly above, outlining the edges. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rim@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "rim",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 100,
+      "elevation": 25,
+      "intensity": 1,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": -180,
+      "elevation": 25,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t2",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 0,
+      "intensity": 0.15,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：强烈的轮廓光勾勒主体边缘；补光为微弱、柔和漫射的光，从正前方平视高度照来；轮廓光从右后方略高处勾勒边缘；轮廓光从左后方略高处勾勒边缘。中等反差，阴影清晰。",
+   "en": "Lighting: Strong rim lighting outlining the subject's edges; faint soft diffused fill light from the front, at eye level; rim light from behind on the right, slightly above, outlining the edges; rim light from behind on the left, slightly above, outlining the edges. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rim@3",
+   "lighting": {
+    "enabled": true,
+    "preset": "rim",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": -125,
+      "elevation": 25,
+      "intensity": 1,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": -45,
+      "elevation": 25,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t2",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 95,
+      "elevation": 0,
+      "intensity": 0.15,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 95,
+    "pitch": -25,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：强烈的轮廓光勾勒主体边缘；补光为微弱、柔和漫射的光，从正前方平视高度照来；轮廓光从右后方略高处勾勒边缘；轮廓光从左后方略高处勾勒边缘。中等反差，阴影清晰。",
+   "en": "Lighting: Strong rim lighting outlining the subject's edges; faint soft diffused fill light from the front, at eye level; rim light from behind on the right, slightly above, outlining the edges; rim light from behind on the left, slightly above, outlining the edges. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rim@4",
+   "lighting": {
+    "enabled": true,
+    "preset": "rim",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 25,
+      "intensity": 1,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 40,
+      "elevation": 25,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t2",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -180,
+      "elevation": 0,
+      "intensity": 0.15,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 180,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：强烈的轮廓光勾勒主体边缘；补光为微弱、柔和漫射的光，从正前方平视高度照来；轮廓光从右后方略高处勾勒边缘；轮廓光从左后方略高处勾勒边缘。中等反差，阴影清晰。",
+   "en": "Lighting: Strong rim lighting outlining the subject's edges; faint soft diffused fill light from the front, at eye level; rim light from behind on the right, slightly above, outlining the edges; rim light from behind on the left, slightly above, outlining the edges. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "rim@5",
+   "lighting": {
+    "enabled": true,
+    "preset": "rim",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 140,
+      "elevation": 25,
+      "intensity": 1,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": -140,
+      "elevation": 25,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t2",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 0,
+      "intensity": 0.15,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": false,
+    "orbit": 30,
+    "pitch": 60,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：强烈的轮廓光勾勒主体边缘；补光为微弱、柔和漫射的光，从正前方平视高度照来；轮廓光从右后方略高处勾勒边缘；轮廓光从左后方略高处勾勒边缘。中等反差，阴影清晰。",
+   "en": "Lighting: Strong rim lighting outlining the subject's edges; faint soft diffused fill light from the front, at eye level; rim light from behind on the right, slightly above, outlining the edges; rim light from behind on the left, slightly above, outlining the edges. Moderate contrast with defined shadows."
+  },
+  {
+   "name": "backlight@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "backlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -180,
+      "elevation": 15,
+      "intensity": 1.2,
+      "kelvin": 4500,
+      "color": "#ffdabb",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 5,
+      "intensity": 0.25,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.3,
+    "ambient_kelvin": 5000,
+    "extras": [
+     "haze",
+     "flare"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：逆光，主体周围有发光的光晕；主光从正后方略高处照来；补光为微弱、柔和漫射的光，从正前方平视高度照来。反差柔和，暗部通透。空气中弥漫薄雾，镜头光晕。",
+   "en": "Lighting: Backlit, a glowing halo around the subject; key light from directly behind, slightly above; faint soft diffused fill light from the front, at eye level. Gentle contrast with soft, open shadows. Atmospheric haze, lens flare."
+  },
+  {
+   "name": "backlight@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "backlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -180,
+      "elevation": 15,
+      "intensity": 1.2,
+      "kelvin": 4500,
+      "color": "#ffdabb",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 5,
+      "intensity": 0.25,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.3,
+    "ambient_kelvin": 5000,
+    "extras": [
+     "haze",
+     "flare"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：逆光，主体周围有发光的光晕；主光从正后方略高处照来；补光为微弱、柔和漫射的光，从正前方平视高度照来。反差柔和，暗部通透。空气中弥漫薄雾，镜头光晕。",
+   "en": "Lighting: Backlit, a glowing halo around the subject; key light from directly behind, slightly above; faint soft diffused fill light from the front, at eye level. Gentle contrast with soft, open shadows. Atmospheric haze, lens flare."
+  },
+  {
+   "name": "backlight@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "backlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 140,
+      "elevation": 15,
+      "intensity": 1.2,
+      "kelvin": 4500,
+      "color": "#ffdabb",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 5,
+      "intensity": 0.25,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.3,
+    "ambient_kelvin": 5000,
+    "extras": [
+     "haze",
+     "flare"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：逆光，主体周围有发光的光晕；主光从正后方略高处照来；补光为微弱、柔和漫射的光，从正前方平视高度照来。反差柔和，暗部通透。空气中弥漫薄雾，镜头光晕。",
+   "en": "Lighting: Backlit, a glowing halo around the subject; key light from directly behind, slightly above; faint soft diffused fill light from the front, at eye level. Gentle contrast with soft, open shadows. Atmospheric haze, lens flare."
+  },
+  {
+   "name": "silhouette@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "silhouette",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "bg",
+      "enabled": true,
+      "azimuth": -180,
+      "elevation": 5,
+      "intensity": 1.3,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.03,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：剪影，主体在明亮背景前几乎全黑；背景光照亮主体身后的背景。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Silhouette against a bright background, the subject almost completely in shadow; background light illuminating the backdrop behind the subject. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "silhouette@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "silhouette",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "bg",
+      "enabled": true,
+      "azimuth": -180,
+      "elevation": 5,
+      "intensity": 1.3,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.03,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：剪影，主体在明亮背景前几乎全黑；背景光照亮主体身后的背景。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Silhouette against a bright background, the subject almost completely in shadow; background light illuminating the backdrop behind the subject. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "silhouette@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "silhouette",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "bg",
+      "enabled": true,
+      "azimuth": 140,
+      "elevation": 5,
+      "intensity": 1.3,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.03,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：剪影，主体在明亮背景前几乎全黑；背景光照亮主体身后的背景。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Silhouette against a bright background, the subject almost completely in shadow; background light illuminating the backdrop behind the subject. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "golden_hour@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "golden_hour",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -70,
+      "elevation": 8,
+      "intensity": 1,
+      "kelvin": 2800,
+      "color": "#ffaa5f",
+      "softness": 0.6
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 60,
+      "elevation": 10,
+      "intensity": 0.3,
+      "kelvin": 7000,
+      "color": "#f3f2ff",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.35,
+    "ambient_kelvin": 3800,
+    "extras": [
+     "flare"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：黄金时刻，低角度的暖色阳光；主光为暖金色光，从左侧平视高度照来；补光为柔和漫射的偏冷光，从右前方略高处照来。反差柔和，暗部通透，环境色调偏暖。镜头光晕。",
+   "en": "Lighting: Golden hour sunlight, a low warm sun; warm golden key light from the left side, at eye level; soft diffused cool fill light from the front right, slightly above. Gentle contrast with soft, open shadows, with a warm ambient tone. Lens flare."
+  },
+  {
+   "name": "golden_hour@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "golden_hour",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -70,
+      "elevation": 8,
+      "intensity": 1,
+      "kelvin": 2800,
+      "color": "#ffaa5f",
+      "softness": 0.6
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 60,
+      "elevation": 10,
+      "intensity": 0.3,
+      "kelvin": 7000,
+      "color": "#f3f2ff",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.35,
+    "ambient_kelvin": 3800,
+    "extras": [
+     "flare"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：黄金时刻，低角度的暖色阳光；主光为暖金色光，从左侧平视高度照来；补光为柔和漫射的偏冷光，从右前方略高处照来。反差柔和，暗部通透，环境色调偏暖。镜头光晕。",
+   "en": "Lighting: Golden hour sunlight, a low warm sun; warm golden key light from the left side, at eye level; soft diffused cool fill light from the front right, slightly above. Gentle contrast with soft, open shadows, with a warm ambient tone. Lens flare."
+  },
+  {
+   "name": "golden_hour@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "golden_hour",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -110,
+      "elevation": 8,
+      "intensity": 1,
+      "kelvin": 2800,
+      "color": "#ffaa5f",
+      "softness": 0.6
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 20,
+      "elevation": 10,
+      "intensity": 0.3,
+      "kelvin": 7000,
+      "color": "#f3f2ff",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.35,
+    "ambient_kelvin": 3800,
+    "extras": [
+     "flare"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：黄金时刻，低角度的暖色阳光；主光为暖金色光，从左侧平视高度照来；补光为柔和漫射的偏冷光，从右前方略高处照来。反差柔和，暗部通透，环境色调偏暖。镜头光晕。",
+   "en": "Lighting: Golden hour sunlight, a low warm sun; warm golden key light from the left side, at eye level; soft diffused cool fill light from the front right, slightly above. Gentle contrast with soft, open shadows, with a warm ambient tone. Lens flare."
+  },
+  {
+   "name": "blue_hour@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "blue_hour",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -30,
+      "elevation": 15,
+      "intensity": 0.45,
+      "kelvin": 9500,
+      "color": "#cddcff",
+      "softness": 0.9
+     },
+     {
+      "id": "t1",
+      "role": "practical",
+      "enabled": true,
+      "azimuth": 40,
+      "elevation": 0,
+      "intensity": 0.6,
+      "kelvin": 2700,
+      "color": "#ffa757",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.35,
+    "ambient_kelvin": 10000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：蓝调时刻，冷色暮光与暖色灯光；主光为微弱、柔和漫射的冷蓝色光，从左前方略高处照来；场景中有强烈的暖金色的实景光源，从右前方平视高度照来。反差柔和，暗部通透，环境色调偏冷蓝。",
+   "en": "Lighting: Blue hour twilight, cool ambient light with warm practical lights; dim soft diffused cold blue key light from the front left, slightly above; strong warm golden practical light source visible in the scene, coming from the front right, at eye level. Gentle contrast with soft, open shadows, with a cool blue ambient tone."
+  },
+  {
+   "name": "blue_hour@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "blue_hour",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -30,
+      "elevation": 15,
+      "intensity": 0.45,
+      "kelvin": 9500,
+      "color": "#cddcff",
+      "softness": 0.9
+     },
+     {
+      "id": "t1",
+      "role": "practical",
+      "enabled": true,
+      "azimuth": 40,
+      "elevation": 0,
+      "intensity": 0.6,
+      "kelvin": 2700,
+      "color": "#ffa757",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.35,
+    "ambient_kelvin": 10000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：蓝调时刻，冷色暮光与暖色灯光；主光为微弱、柔和漫射的冷蓝色光，从左前方略高处照来；场景中有强烈的暖金色的实景光源，从右前方平视高度照来。反差柔和，暗部通透，环境色调偏冷蓝。",
+   "en": "Lighting: Blue hour twilight, cool ambient light with warm practical lights; dim soft diffused cold blue key light from the front left, slightly above; strong warm golden practical light source visible in the scene, coming from the front right, at eye level. Gentle contrast with soft, open shadows, with a cool blue ambient tone."
+  },
+  {
+   "name": "blue_hour@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "blue_hour",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -70,
+      "elevation": 15,
+      "intensity": 0.45,
+      "kelvin": 9500,
+      "color": "#cddcff",
+      "softness": 0.9
+     },
+     {
+      "id": "t1",
+      "role": "practical",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 0,
+      "intensity": 0.6,
+      "kelvin": 2700,
+      "color": "#ffa757",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.35,
+    "ambient_kelvin": 10000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：蓝调时刻，冷色暮光与暖色灯光；主光为微弱、柔和漫射的冷蓝色光，从左前方略高处照来；场景中有强烈的暖金色的实景光源，从右前方平视高度照来。反差柔和，暗部通透，环境色调偏冷蓝。",
+   "en": "Lighting: Blue hour twilight, cool ambient light with warm practical lights; dim soft diffused cold blue key light from the front left, slightly above; strong warm golden practical light source visible in the scene, coming from the front right, at eye level. Gentle contrast with soft, open shadows, with a cool blue ambient tone."
+  },
+  {
+   "name": "overcast@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "overcast",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 60,
+      "intensity": 0.7,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 0,
+      "intensity": 0.3,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     }
+    ],
+    "ambient": 0.6,
+    "ambient_kelvin": 7000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：阴天柔光，阴影柔和；主光为柔和漫射的光，从正前方高处（约 60°）照来；补光为柔和漫射的光，从正前方平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft overcast light with diffused shadows; soft diffused key light from the front, high above (about 60 degrees); soft diffused fill light from the front, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "overcast@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "overcast",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 60,
+      "intensity": 0.7,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 0,
+      "intensity": 0.3,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     }
+    ],
+    "ambient": 0.6,
+    "ambient_kelvin": 7000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：阴天柔光，阴影柔和；主光为柔和漫射的光，从正前方高处（约 60°）照来；补光为柔和漫射的光，从正前方平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft overcast light with diffused shadows; soft diffused key light from the front, high above (about 60 degrees); soft diffused fill light from the front, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "overcast@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "overcast",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 60,
+      "intensity": 0.7,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 0,
+      "intensity": 0.3,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     }
+    ],
+    "ambient": 0.6,
+    "ambient_kelvin": 7000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：阴天柔光，阴影柔和；主光为柔和漫射的光，从正前方高处（约 60°）照来；补光为柔和漫射的光，从正前方平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft overcast light with diffused shadows; soft diffused key light from the front, high above (about 60 degrees); soft diffused fill light from the front, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "window@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "window",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 20,
+      "intensity": 1,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.75
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 80,
+      "elevation": 0,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.18,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：侧面窗户透进的柔和自然光；主光为柔和漫射的光，从左侧略高处照来；补光为微弱、柔和漫射的光，从右侧平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft window light from the side; soft diffused key light from the left side, slightly above; faint soft diffused fill light from the right side, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "window@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "window",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 20,
+      "intensity": 1,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.75
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 80,
+      "elevation": 0,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.18,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：侧面窗户透进的柔和自然光；主光为柔和漫射的光，从左侧略高处照来；补光为微弱、柔和漫射的光，从右侧平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft window light from the side; soft diffused key light from the left side, slightly above; faint soft diffused fill light from the right side, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "window@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "window",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -120,
+      "elevation": 20,
+      "intensity": 1,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.75
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 40,
+      "elevation": 0,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.18,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：侧面窗户透进的柔和自然光；主光为柔和漫射的光，从左侧略高处照来；补光为微弱、柔和漫射的光，从右侧平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft window light from the side; soft diffused key light from the left side, slightly above; faint soft diffused fill light from the right side, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "window@3",
+   "lighting": {
+    "enabled": true,
+    "preset": "window",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 15,
+      "elevation": 20,
+      "intensity": 1,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.75
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 175,
+      "elevation": 0,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.18,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 95,
+    "pitch": -25,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：侧面窗户透进的柔和自然光；主光为柔和漫射的光，从左侧略高处照来；补光为微弱、柔和漫射的光，从右侧平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft window light from the side; soft diffused key light from the left side, slightly above; faint soft diffused fill light from the right side, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "window@4",
+   "lighting": {
+    "enabled": true,
+    "preset": "window",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 100,
+      "elevation": 20,
+      "intensity": 1,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.75
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -100,
+      "elevation": 0,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.18,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 180,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：侧面窗户透进的柔和自然光；主光为柔和漫射的光，从左侧略高处照来；补光为微弱、柔和漫射的光，从右侧平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft window light from the side; soft diffused key light from the left side, slightly above; faint soft diffused fill light from the right side, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "window@5",
+   "lighting": {
+    "enabled": true,
+    "preset": "window",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 20,
+      "intensity": 1,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.75
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 80,
+      "elevation": 0,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.18,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": false,
+    "orbit": 30,
+    "pitch": 60,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：侧面窗户透进的柔和自然光；主光为柔和漫射的光，从左侧略高处照来；补光为微弱、柔和漫射的光，从右侧平视高度照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft window light from the side; soft diffused key light from the left side, slightly above; faint soft diffused fill light from the right side, at eye level. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "top@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "top",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 85,
+      "intensity": 1.1,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：顶光，眼窝和下巴下方有深阴影；主光从正上方照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Harsh top lighting with deep shadows in the eye sockets; key light from directly overhead. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "top@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "top",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 85,
+      "intensity": 1.1,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：顶光，眼窝和下巴下方有深阴影；主光从正上方照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Harsh top lighting with deep shadows in the eye sockets; key light from directly overhead. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "top@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "top",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 85,
+      "intensity": 1.1,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：顶光，眼窝和下巴下方有深阴影；主光从正上方照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Harsh top lighting with deep shadows in the eye sockets; key light from directly overhead. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "under@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "under",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": -50,
+      "intensity": 1,
+      "kelvin": 3500,
+      "color": "#ffc18d",
+      "softness": 0.4
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 4000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：从下往上的底光，诡异感；主光为偏暖光，从正前方低处（约 50°，由下往上）照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Eerie under-lighting from below; warm key light from the front, from below (about 50 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "under@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "under",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": -50,
+      "intensity": 1,
+      "kelvin": 3500,
+      "color": "#ffc18d",
+      "softness": 0.4
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 4000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：从下往上的底光，诡异感；主光为偏暖光，从正前方低处（约 50°，由下往上）照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Eerie under-lighting from below; warm key light from the front, from below (about 50 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "under@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "under",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": -50,
+      "intensity": 1,
+      "kelvin": 3500,
+      "color": "#ffc18d",
+      "softness": 0.4
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 4000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：从下往上的底光，诡异感；主光为偏暖光，从正前方低处（约 50°，由下往上）照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Eerie under-lighting from below; warm key light from the front, from below (about 50 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "moonlight@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "moonlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 45,
+      "intensity": 0.55,
+      "kelvin": 8500,
+      "color": "#d7e2ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.15,
+    "ambient_kelvin": 11000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：冷色月光，夜景；主光为冷蓝色光，从左前方高处（约 45°）照来。反差柔和，暗部通透。",
+   "en": "Lighting: Cold moonlight in a dark night scene; cold blue key light from the front left, high above (about 45 degrees). Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "moonlight@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "moonlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 45,
+      "intensity": 0.55,
+      "kelvin": 8500,
+      "color": "#d7e2ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.15,
+    "ambient_kelvin": 11000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：冷色月光，夜景；主光为冷蓝色光，从左前方高处（约 45°）照来。反差柔和，暗部通透。",
+   "en": "Lighting: Cold moonlight in a dark night scene; cold blue key light from the front left, high above (about 45 degrees). Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "moonlight@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "moonlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 45,
+      "intensity": 0.55,
+      "kelvin": 8500,
+      "color": "#d7e2ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.15,
+    "ambient_kelvin": 11000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：冷色月光，夜景；主光为冷蓝色光，从左前方高处（约 45°）照来。反差柔和，暗部通透。",
+   "en": "Lighting: Cold moonlight in a dark night scene; cold blue key light from the front left, high above (about 45 degrees). Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "neon@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "neon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -75,
+      "elevation": 10,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#ff2e88",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 80,
+      "elevation": 15,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#20c8ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 8000,
+    "extras": [
+     "wet",
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：霓虹灯光，品红与青色的双色光；主光为品红色光，从左侧略高处照来；轮廓光为青色光，从右侧略高处勾勒边缘。环境昏暗，阴影浓重，明暗对比强烈。湿润地面上的反光，高光处柔和辉光。",
+   "en": "Lighting: Neon lighting with magenta and cyan colored light; magenta key light from the left side, slightly above; cyan rim light from the right side, slightly above, outlining the edges. Dark surroundings, deep shadows and high contrast (chiaroscuro). Reflections on wet ground, soft glow and bloom on highlights."
+  },
+  {
+   "name": "neon@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "neon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -75,
+      "elevation": 10,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#ff2e88",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 80,
+      "elevation": 15,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#20c8ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 8000,
+    "extras": [
+     "wet",
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：霓虹灯光，品红与青色的双色光；主光为品红色光，从左侧略高处照来；轮廓光为青色光，从右侧略高处勾勒边缘。环境昏暗，阴影浓重，明暗对比强烈。湿润地面上的反光，高光处柔和辉光。",
+   "en": "Lighting: Neon lighting with magenta and cyan colored light; magenta key light from the left side, slightly above; cyan rim light from the right side, slightly above, outlining the edges. Dark surroundings, deep shadows and high contrast (chiaroscuro). Reflections on wet ground, soft glow and bloom on highlights."
+  },
+  {
+   "name": "neon@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "neon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -115,
+      "elevation": 10,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#ff2e88",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 40,
+      "elevation": 15,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#20c8ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 8000,
+    "extras": [
+     "wet",
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：霓虹灯光，品红与青色的双色光；主光为品红色光，从左侧略高处照来；轮廓光为青色光，从右侧略高处勾勒边缘。环境昏暗，阴影浓重，明暗对比强烈。湿润地面上的反光，高光处柔和辉光。",
+   "en": "Lighting: Neon lighting with magenta and cyan colored light; magenta key light from the left side, slightly above; cyan rim light from the right side, slightly above, outlining the edges. Dark surroundings, deep shadows and high contrast (chiaroscuro). Reflections on wet ground, soft glow and bloom on highlights."
+  },
+  {
+   "name": "neon@3",
+   "lighting": {
+    "enabled": true,
+    "preset": "neon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 20,
+      "elevation": 10,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#ff2e88",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 175,
+      "elevation": 15,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#20c8ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 8000,
+    "extras": [
+     "wet",
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 95,
+    "pitch": -25,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：霓虹灯光，品红与青色的双色光；主光为品红色光，从左侧略高处照来；轮廓光为青色光，从右侧略高处勾勒边缘。环境昏暗，阴影浓重，明暗对比强烈。湿润地面上的反光，高光处柔和辉光。",
+   "en": "Lighting: Neon lighting with magenta and cyan colored light; magenta key light from the left side, slightly above; cyan rim light from the right side, slightly above, outlining the edges. Dark surroundings, deep shadows and high contrast (chiaroscuro). Reflections on wet ground, soft glow and bloom on highlights."
+  },
+  {
+   "name": "neon@4",
+   "lighting": {
+    "enabled": true,
+    "preset": "neon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 105,
+      "elevation": 10,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#ff2e88",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": -100,
+      "elevation": 15,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#20c8ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 8000,
+    "extras": [
+     "wet",
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 180,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：霓虹灯光，品红与青色的双色光；主光为品红色光，从左侧略高处照来；轮廓光为青色光，从右侧略高处勾勒边缘。环境昏暗，阴影浓重，明暗对比强烈。湿润地面上的反光，高光处柔和辉光。",
+   "en": "Lighting: Neon lighting with magenta and cyan colored light; magenta key light from the left side, slightly above; cyan rim light from the right side, slightly above, outlining the edges. Dark surroundings, deep shadows and high contrast (chiaroscuro). Reflections on wet ground, soft glow and bloom on highlights."
+  },
+  {
+   "name": "neon@5",
+   "lighting": {
+    "enabled": true,
+    "preset": "neon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -75,
+      "elevation": 10,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#ff2e88",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 80,
+      "elevation": 15,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#20c8ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 8000,
+    "extras": [
+     "wet",
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": false,
+    "orbit": 30,
+    "pitch": 60,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：霓虹灯光，品红与青色的双色光；主光为品红色光，从左侧略高处照来；轮廓光为青色光，从右侧略高处勾勒边缘。环境昏暗，阴影浓重，明暗对比强烈。湿润地面上的反光，高光处柔和辉光。",
+   "en": "Lighting: Neon lighting with magenta and cyan colored light; magenta key light from the left side, slightly above; cyan rim light from the right side, slightly above, outlining the edges. Dark surroundings, deep shadows and high contrast (chiaroscuro). Reflections on wet ground, soft glow and bloom on highlights."
+  },
+  {
+   "name": "candle@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "candle",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "practical",
+      "enabled": true,
+      "azimuth": 30,
+      "elevation": -10,
+      "intensity": 0.9,
+      "kelvin": 1900,
+      "color": "#ff8400",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.06,
+    "ambient_kelvin": 3000,
+    "extras": [
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：温暖摇曳的烛光，四周昏暗；场景中有橙红色的实景光源，从右前方低处（约 10°，由下往上）照来。环境昏暗，阴影浓重，明暗对比强烈。高光处柔和辉光。",
+   "en": "Lighting: Warm flickering candlelight with dark surroundings; deep orange practical light source visible in the scene, coming from the front right, from below (about 10 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro). Soft glow and bloom on highlights."
+  },
+  {
+   "name": "candle@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "candle",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "practical",
+      "enabled": true,
+      "azimuth": 30,
+      "elevation": -10,
+      "intensity": 0.9,
+      "kelvin": 1900,
+      "color": "#ff8400",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.06,
+    "ambient_kelvin": 3000,
+    "extras": [
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：温暖摇曳的烛光，四周昏暗；场景中有橙红色的实景光源，从右前方低处（约 10°，由下往上）照来。环境昏暗，阴影浓重，明暗对比强烈。高光处柔和辉光。",
+   "en": "Lighting: Warm flickering candlelight with dark surroundings; deep orange practical light source visible in the scene, coming from the front right, from below (about 10 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro). Soft glow and bloom on highlights."
+  },
+  {
+   "name": "candle@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "candle",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "practical",
+      "enabled": true,
+      "azimuth": -10,
+      "elevation": -10,
+      "intensity": 0.9,
+      "kelvin": 1900,
+      "color": "#ff8400",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.06,
+    "ambient_kelvin": 3000,
+    "extras": [
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：温暖摇曳的烛光，四周昏暗；场景中有橙红色的实景光源，从右前方低处（约 10°，由下往上）照来。环境昏暗，阴影浓重，明暗对比强烈。高光处柔和辉光。",
+   "en": "Lighting: Warm flickering candlelight with dark surroundings; deep orange practical light source visible in the scene, coming from the front right, from below (about 10 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro). Soft glow and bloom on highlights."
+  },
+  {
+   "name": "spotlight@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "spotlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 60,
+      "intensity": 1.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.15
+     }
+    ],
+    "ambient": 0.03,
+    "ambient_kelvin": 5000,
+    "extras": [
+     "haze",
+     "volumetric"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：舞台聚光灯从上方照下，黑暗中的一束光；主光为强烈、硬朗的光，从正前方高处（约 60°）照来。环境昏暗，阴影浓重，明暗对比强烈。空气中弥漫薄雾，体积光光束（丁达尔效应）。",
+   "en": "Lighting: Theatrical spotlight from above, a pool of light in darkness; strong hard key light from the front, high above (about 60 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro). Atmospheric haze, volumetric light rays."
+  },
+  {
+   "name": "spotlight@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "spotlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 60,
+      "intensity": 1.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.15
+     }
+    ],
+    "ambient": 0.03,
+    "ambient_kelvin": 5000,
+    "extras": [
+     "haze",
+     "volumetric"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：舞台聚光灯从上方照下，黑暗中的一束光；主光为强烈、硬朗的光，从正前方高处（约 60°）照来。环境昏暗，阴影浓重，明暗对比强烈。空气中弥漫薄雾，体积光光束（丁达尔效应）。",
+   "en": "Lighting: Theatrical spotlight from above, a pool of light in darkness; strong hard key light from the front, high above (about 60 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro). Atmospheric haze, volumetric light rays."
+  },
+  {
+   "name": "spotlight@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "spotlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 60,
+      "intensity": 1.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.15
+     }
+    ],
+    "ambient": 0.03,
+    "ambient_kelvin": 5000,
+    "extras": [
+     "haze",
+     "volumetric"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：舞台聚光灯从上方照下，黑暗中的一束光；主光为强烈、硬朗的光，从正前方高处（约 60°）照来。环境昏暗，阴影浓重，明暗对比强烈。空气中弥漫薄雾，体积光光束（丁达尔效应）。",
+   "en": "Lighting: Theatrical spotlight from above, a pool of light in darkness; strong hard key light from the front, high above (about 60 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro). Atmospheric haze, volumetric light rays."
+  },
+  {
+   "name": "high_key@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "high_key",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -20,
+      "elevation": 25,
+      "intensity": 0.9,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.95
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 30,
+      "elevation": 0,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 1
+     },
+     {
+      "id": "t2",
+      "role": "bg",
+      "enabled": true,
+      "azimuth": -180,
+      "elevation": 0,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     }
+    ],
+    "ambient": 0.8,
+    "ambient_kelvin": 6500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：明亮的高调光，几乎没有阴影；主光为柔和漫射的光，从正前方略高处照来；补光为柔和漫射的光，从右前方平视高度照来；背景光为柔和漫射的光，照亮主体身后的背景。整体明亮通透，反差低，阴影柔和。",
+   "en": "Lighting: Bright high-key lighting with minimal shadows and clean white tones; soft diffused key light from the front, slightly above; soft diffused fill light from the front right, at eye level; soft diffused background light illuminating the backdrop behind the subject. Bright, airy, low-contrast lighting with soft shadows."
+  },
+  {
+   "name": "high_key@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "high_key",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -20,
+      "elevation": 25,
+      "intensity": 0.9,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.95
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 30,
+      "elevation": 0,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 1
+     },
+     {
+      "id": "t2",
+      "role": "bg",
+      "enabled": true,
+      "azimuth": -180,
+      "elevation": 0,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     }
+    ],
+    "ambient": 0.8,
+    "ambient_kelvin": 6500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：明亮的高调光，几乎没有阴影；主光为柔和漫射的光，从正前方略高处照来；补光为柔和漫射的光，从右前方平视高度照来；背景光为柔和漫射的光，照亮主体身后的背景。整体明亮通透，反差低，阴影柔和。",
+   "en": "Lighting: Bright high-key lighting with minimal shadows and clean white tones; soft diffused key light from the front, slightly above; soft diffused fill light from the front right, at eye level; soft diffused background light illuminating the backdrop behind the subject. Bright, airy, low-contrast lighting with soft shadows."
+  },
+  {
+   "name": "high_key@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "high_key",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -60,
+      "elevation": 25,
+      "intensity": 0.9,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.95
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -10,
+      "elevation": 0,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 1
+     },
+     {
+      "id": "t2",
+      "role": "bg",
+      "enabled": true,
+      "azimuth": 140,
+      "elevation": 0,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     }
+    ],
+    "ambient": 0.8,
+    "ambient_kelvin": 6500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：明亮的高调光，几乎没有阴影；主光为柔和漫射的光，从正前方略高处照来；补光为柔和漫射的光，从右前方平视高度照来；背景光为柔和漫射的光，照亮主体身后的背景。整体明亮通透，反差低，阴影柔和。",
+   "en": "Lighting: Bright high-key lighting with minimal shadows and clean white tones; soft diffused key light from the front, slightly above; soft diffused fill light from the front right, at eye level; soft diffused background light illuminating the backdrop behind the subject. Bright, airy, low-contrast lighting with soft shadows."
+  },
+  {
+   "name": "low_key@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "low_key",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -60,
+      "elevation": 30,
+      "intensity": 1,
+      "kelvin": 4500,
+      "color": "#ffdabb",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.04,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：戏剧性的低调光，大面积暗部；主光从左前方高处（约 30°）照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Dramatic low-key lighting, mostly dark with deep shadows; key light from the front left, high above (about 30 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "low_key@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "low_key",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -60,
+      "elevation": 30,
+      "intensity": 1,
+      "kelvin": 4500,
+      "color": "#ffdabb",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.04,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：戏剧性的低调光，大面积暗部；主光从左前方高处（约 30°）照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Dramatic low-key lighting, mostly dark with deep shadows; key light from the front left, high above (about 30 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "low_key@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "low_key",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -100,
+      "elevation": 30,
+      "intensity": 1,
+      "kelvin": 4500,
+      "color": "#ffdabb",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.04,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：戏剧性的低调光，大面积暗部；主光从左前方高处（约 30°）照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Dramatic low-key lighting, mostly dark with deep shadows; key light from the front left, high above (about 30 degrees). Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "noon@0",
+   "lighting": {
+    "enabled": true,
+    "preset": "noon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 20,
+      "elevation": 75,
+      "intensity": 1.2,
+      "kelvin": 5800,
+      "color": "#fff3e7",
+      "softness": 0.05
+     }
+    ],
+    "ambient": 0.4,
+    "ambient_kelvin": 7000,
+    "extras": [
+     "shadows"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：正午强烈的直射阳光，阴影短而硬；主光为硬朗的光，从正上方照来。反差柔和，暗部通透。清晰的投影。",
+   "en": "Lighting: Harsh midday sun with short hard shadows; hard key light from directly overhead. Gentle contrast with soft, open shadows. Crisp cast shadows."
+  },
+  {
+   "name": "noon@1",
+   "lighting": {
+    "enabled": true,
+    "preset": "noon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 20,
+      "elevation": 75,
+      "intensity": 1.2,
+      "kelvin": 5800,
+      "color": "#fff3e7",
+      "softness": 0.05
+     }
+    ],
+    "ambient": 0.4,
+    "ambient_kelvin": 7000,
+    "extras": [
+     "shadows"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：正午强烈的直射阳光，阴影短而硬；主光为硬朗的光，从正上方照来。反差柔和，暗部通透。清晰的投影。",
+   "en": "Lighting: Harsh midday sun with short hard shadows; hard key light from directly overhead. Gentle contrast with soft, open shadows. Crisp cast shadows."
+  },
+  {
+   "name": "noon@2",
+   "lighting": {
+    "enabled": true,
+    "preset": "noon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -20,
+      "elevation": 75,
+      "intensity": 1.2,
+      "kelvin": 5800,
+      "color": "#fff3e7",
+      "softness": 0.05
+     }
+    ],
+    "ambient": 0.4,
+    "ambient_kelvin": 7000,
+    "extras": [
+     "shadows"
+    ],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：正午强烈的直射阳光，阴影短而硬；主光为硬朗的光，从正上方照来。反差柔和，暗部通透。清晰的投影。",
+   "en": "Lighting: Harsh midday sun with short hard shadows; hard key light from directly overhead. Gentle contrast with soft, open shadows. Crisp cast shadows."
+  },
+  {
+   "name": "custom-color",
+   "lighting": {
+    "enabled": true,
+    "preset": "three_point",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 35,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 110,
+      "elevation": 35,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#20c8ff",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：经典三点布光；主光从左前方高处（约 35°）照来；补光为柔和漫射的光，从右前方略高处照来；轮廓光为青色光，从右后方高处（约 35°）勾勒边缘。反差柔和，暗部通透。",
+   "en": "Lighting: Classic three-point lighting; key light from the front left, high above (about 35 degrees); soft diffused fill light from the front right, slightly above; cyan rim light from behind on the right, high above (about 35 degrees), outlining the edges. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "custom-moved",
+   "lighting": {
+    "enabled": true,
+    "preset": "three_point",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -10,
+      "elevation": 65,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.05
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 110,
+      "elevation": 35,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：主光为硬朗的光，从正上方照来；补光为柔和漫射的光，从右前方略高处照来；轮廓光从右后方高处（约 35°）勾勒边缘。反差柔和，暗部通透。",
+   "en": "Lighting: Hard key light from directly overhead; soft diffused fill light from the front right, slightly above; rim light from behind on the right, high above (about 35 degrees), outlining the edges. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "custom-follow",
+   "lighting": {
+    "enabled": true,
+    "preset": "",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 35,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 45,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 150,
+      "elevation": 35,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": true
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：主光从左前方高处（约 35°）照来；补光为柔和漫射的光，从右前方略高处照来；轮廓光从右后方高处（约 35°）勾勒边缘。反差柔和，暗部通透。",
+   "en": "Lighting: Key light from the front left, high above (about 35 degrees); soft diffused fill light from the front right, slightly above; rim light from behind on the right, high above (about 35 degrees), outlining the edges. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "custom-note",
+   "lighting": {
+    "enabled": true,
+    "preset": "",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 35,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 110,
+      "elevation": 35,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [
+     "haze",
+     "wet"
+    ],
+    "note": "雨水反光，空气里有薄雾",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 10,
+    "pitch": 5,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：主光从左侧高处（约 35°）照来；补光为柔和漫射的光，从正前方略高处照来；轮廓光从右侧高处（约 35°）勾勒边缘。反差柔和，暗部通透。空气中弥漫薄雾，湿润地面上的反光。雨水反光，空气里有薄雾。",
+   "en": "Lighting: Key light from the left side, high above (about 35 degrees); soft diffused fill light from the front, slightly above; rim light from the right side, high above (about 35 degrees), outlining the edges. Gentle contrast with soft, open shadows. Atmospheric haze, reflections on wet ground. 雨水反光，空气里有薄雾."
+  },
+  {
+   "name": "custom-off",
+   "lighting": {
+    "enabled": true,
+    "preset": "",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": false,
+      "azimuth": -80,
+      "elevation": 35,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": false,
+      "azimuth": 110,
+      "elevation": 35,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": null,
+   "zh": "光线：补光为柔和漫射的光，从正前方略高处照来。反差柔和，暗部通透。",
+   "en": "Lighting: Soft diffused fill light from the front, slightly above. Gentle contrast with soft, open shadows."
+  },
+  {
+   "name": "custom-warm-cool",
+   "lighting": {
+    "enabled": true,
+    "preset": "",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 35,
+      "intensity": 1.6,
+      "kelvin": 1900,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 10,
+      "intensity": 0.15,
+      "kelvin": 10000,
+      "color": "#ffefe1",
+      "softness": 1
+     }
+    ],
+    "ambient": 0.05,
+    "ambient_kelvin": 9000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：主光为强烈的橙红色光，从左侧高处（约 35°）照来；补光为微弱、柔和漫射的冷蓝色光，从正前方略高处照来。环境昏暗，阴影浓重，明暗对比强烈。",
+   "en": "Lighting: Strong deep orange key light from the left side, high above (about 35 degrees); faint soft diffused cold blue fill light from the front, slightly above. Dark surroundings, deep shadows and high contrast (chiaroscuro)."
+  },
+  {
+   "name": "custom-magenta-under",
+   "lighting": {
+    "enabled": true,
+    "preset": "",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": -60,
+      "intensity": 1,
+      "kelvin": null,
+      "color": "#ff2e88",
+      "softness": 0.55
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "光线：主光为品红色光，从正前方低处（约 60°，由下往上）照来。中等反差，阴影清晰。",
+   "en": "Lighting: Magenta key light from the front, from below (about 60 degrees). Moderate contrast with defined shadows."
+  },
+  {
+   "name": "disabled",
+   "lighting": {
+    "enabled": false,
+    "preset": "three_point",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 35,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 110,
+      "elevation": 35,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   },
+   "camera": {
+    "enabled": true,
+    "orbit": 0,
+    "pitch": 0,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "zh": "",
+   "en": ""
+  }
+ ],
+ "presets": [
+  {
+   "id": "natural",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "natural",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -75,
+      "elevation": 40,
+      "intensity": 0.9,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.7
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 10,
+      "elevation": 15,
+      "intensity": 0.35,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.45,
+    "ambient_kelvin": 6500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "rembrandt",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "rembrandt",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -85,
+      "elevation": 40,
+      "intensity": 1,
+      "kelvin": 4300,
+      "color": "#ffd5b3",
+      "softness": 0.45
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 20,
+      "elevation": 5,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.8
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 4500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "butterfly",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "butterfly",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 50,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": -20,
+      "intensity": 0.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.3,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "loop",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "loop",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -75,
+      "elevation": 30,
+      "intensity": 0.95,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 5,
+      "intensity": 0.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.85
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "split",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "split",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -130,
+      "elevation": 10,
+      "intensity": 1,
+      "kelvin": 4800,
+      "color": "#ffe0c7",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "three_point",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "three_point",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 35,
+      "intensity": 1,
+      "kelvin": 5200,
+      "color": "#ffe8d5",
+      "softness": 0.55
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 5,
+      "elevation": 10,
+      "intensity": 0.4,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.85
+     },
+     {
+      "id": "t2",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 110,
+      "elevation": 35,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.25,
+    "ambient_kelvin": 5500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "rim",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "rim",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 100,
+      "elevation": 25,
+      "intensity": 1,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": -180,
+      "elevation": 25,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 0.3
+     },
+     {
+      "id": "t2",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 0,
+      "intensity": 0.15,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.12,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "backlight",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "backlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": 140,
+      "elevation": 15,
+      "intensity": 1.2,
+      "kelvin": 4500,
+      "color": "#ffdabb",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 5,
+      "intensity": 0.25,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.3,
+    "ambient_kelvin": 5000,
+    "extras": [
+     "haze",
+     "flare"
+    ],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "silhouette",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "silhouette",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "bg",
+      "enabled": true,
+      "azimuth": 140,
+      "elevation": 5,
+      "intensity": 1.3,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.03,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "golden_hour",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "golden_hour",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -110,
+      "elevation": 8,
+      "intensity": 1,
+      "kelvin": 2800,
+      "color": "#ffaa5f",
+      "softness": 0.6
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 20,
+      "elevation": 10,
+      "intensity": 0.3,
+      "kelvin": 7000,
+      "color": "#f3f2ff",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.35,
+    "ambient_kelvin": 3800,
+    "extras": [
+     "flare"
+    ],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "blue_hour",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "blue_hour",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -70,
+      "elevation": 15,
+      "intensity": 0.45,
+      "kelvin": 9500,
+      "color": "#cddcff",
+      "softness": 0.9
+     },
+     {
+      "id": "t1",
+      "role": "practical",
+      "enabled": true,
+      "azimuth": 0,
+      "elevation": 0,
+      "intensity": 0.6,
+      "kelvin": 2700,
+      "color": "#ffa757",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.35,
+    "ambient_kelvin": 10000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "overcast",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "overcast",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 60,
+      "intensity": 0.7,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 0,
+      "intensity": 0.3,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     }
+    ],
+    "ambient": 0.6,
+    "ambient_kelvin": 7000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "window",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "window",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -120,
+      "elevation": 20,
+      "intensity": 1,
+      "kelvin": 5600,
+      "color": "#ffefe1",
+      "softness": 0.75
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": 40,
+      "elevation": 0,
+      "intensity": 0.12,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.9
+     }
+    ],
+    "ambient": 0.18,
+    "ambient_kelvin": 6000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "top",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "top",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 85,
+      "intensity": 1.1,
+      "kelvin": 5000,
+      "color": "#ffe4ce",
+      "softness": 0.3
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "under",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "under",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": -50,
+      "intensity": 1,
+      "kelvin": 3500,
+      "color": "#ffc18d",
+      "softness": 0.4
+     }
+    ],
+    "ambient": 0.08,
+    "ambient_kelvin": 4000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "moonlight",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "moonlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -80,
+      "elevation": 45,
+      "intensity": 0.55,
+      "kelvin": 8500,
+      "color": "#d7e2ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.15,
+    "ambient_kelvin": 11000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "neon",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "neon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -115,
+      "elevation": 10,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#ff2e88",
+      "softness": 0.5
+     },
+     {
+      "id": "t1",
+      "role": "rim",
+      "enabled": true,
+      "azimuth": 40,
+      "elevation": 15,
+      "intensity": 0.9,
+      "kelvin": null,
+      "color": "#20c8ff",
+      "softness": 0.45
+     }
+    ],
+    "ambient": 0.1,
+    "ambient_kelvin": 8000,
+    "extras": [
+     "wet",
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "candle",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "candle",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "practical",
+      "enabled": true,
+      "azimuth": -10,
+      "elevation": -10,
+      "intensity": 0.9,
+      "kelvin": 1900,
+      "color": "#ff8400",
+      "softness": 0.6
+     }
+    ],
+    "ambient": 0.06,
+    "ambient_kelvin": 3000,
+    "extras": [
+     "bloom"
+    ],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "spotlight",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "spotlight",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -40,
+      "elevation": 60,
+      "intensity": 1.3,
+      "kelvin": 5500,
+      "color": "#ffedde",
+      "softness": 0.15
+     }
+    ],
+    "ambient": 0.03,
+    "ambient_kelvin": 5000,
+    "extras": [
+     "haze",
+     "volumetric"
+    ],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "high_key",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "high_key",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -60,
+      "elevation": 25,
+      "intensity": 0.9,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 0.95
+     },
+     {
+      "id": "t1",
+      "role": "fill",
+      "enabled": true,
+      "azimuth": -10,
+      "elevation": 0,
+      "intensity": 0.7,
+      "kelvin": 6000,
+      "color": "#fff6ed",
+      "softness": 1
+     },
+     {
+      "id": "t2",
+      "role": "bg",
+      "enabled": true,
+      "azimuth": 140,
+      "elevation": 0,
+      "intensity": 0.8,
+      "kelvin": 6500,
+      "color": "#fffefa",
+      "softness": 1
+     }
+    ],
+    "ambient": 0.8,
+    "ambient_kelvin": 6500,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "low_key",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "low_key",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -100,
+      "elevation": 30,
+      "intensity": 1,
+      "kelvin": 4500,
+      "color": "#ffdabb",
+      "softness": 0.35
+     }
+    ],
+    "ambient": 0.04,
+    "ambient_kelvin": 5000,
+    "extras": [],
+    "note": "",
+    "follow": false
+   }
+  },
+  {
+   "id": "noon",
+   "camera": {
+    "enabled": true,
+    "orbit": -40,
+    "pitch": 18,
+    "roll": 0,
+    "distance": 1,
+    "fov": 50,
+    "pan_x": 0,
+    "pan_y": 0,
+    "pan_z": 0
+   },
+   "lighting": {
+    "enabled": true,
+    "preset": "noon",
+    "lights": [
+     {
+      "id": "t0",
+      "role": "key",
+      "enabled": true,
+      "azimuth": -20,
+      "elevation": 75,
+      "intensity": 1.2,
+      "kelvin": 5800,
+      "color": "#fff3e7",
+      "softness": 0.05
+     }
+    ],
+    "ambient": 0.4,
+    "ambient_kelvin": 7000,
+    "extras": [
+     "shadows"
+    ],
+    "note": "",
+    "follow": false
+   }
+  }
+ ]
+}
