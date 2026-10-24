@@ -7,6 +7,34 @@ MOSS-Image 提示词工作台：画框编排 Layout、写 Caption，并和一个
 - 桌面壳：pywebview（Windows 上是系统自带的 Edge WebView2）
 - 编译：`vendor/moss-image-prompt-enhancer/scripts/compile_prompt.py`（官方脚本，原样调用）
 
+## 功能一览
+
+> 以下为本地运行 **2.4** 时的实机截图。
+
+### 主界面 · 画框编排
+
+左侧页面 / 图层 / 属性，中间画布画框，右侧与 Agent 对话；`Ctrl+Enter` 编译提示词。
+
+![主界面画框](docs/screenshots/main-canvas.png)
+
+### 镜头调度室 · 分屏 / 3D
+
+顶栏切换「镜头 / 分屏 / 3D」：左侧是画面投影，右侧是地面网格与 3D 体块、机位视锥、灯光方向。
+
+![镜头调度室](docs/screenshots/director-room.png)
+
+### 灯光
+
+22 种打光预设（伦勃朗、三点布光、黄金时刻等），可调方位 / 强度 / 软硬 / 色温；编译时可写入灯光描述。
+
+![灯光面板](docs/screenshots/lighting-panel.png)
+
+### AI 起稿
+
+用一句话生成定位框、各框描述、整体描述，并可同时设置机位与灯光（`/draft` 或工具条「AI 起稿」）。
+
+![AI 起稿](docs/screenshots/ai-draft.png)
+
 ## 2.4 更新说明
 
 - **镜头调度室**（画布工具条「镜头调度」）：顶栏 [镜头 | 分屏 | 3D] 切换视图，默认分屏（左 / 上是镜头画面，右 / 下是 3D 场景，中间分隔条可拖，双击平分）。
