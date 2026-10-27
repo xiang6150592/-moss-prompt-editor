@@ -5,6 +5,7 @@
 import { CUBE_FACES, faceNormal, type SceneData, type SceneFrame, type Vec3 } from "./camera";
 import { ROLES, backdropShade, hexRgb, kelvinRgb, lightVec, rgbHex, shade, worldAzimuth, type RGB, type WorldLight } from "./lighting";
 import type { Camera, Lighting } from "../types";
+import type { Solid } from "./solid";
 
 type V3 = Vec3;
 const rad = (d: number) => (d * Math.PI) / 180;
@@ -412,19 +413,23 @@ export function drawScene(ctx: CanvasRenderingContext2D, o: DrawOpts): HitMap {
     if (!p || p.x < -30 || p.y < -30 || p.x > W + 30 || p.y > H + 30) continue;
     const sel = o.selection.has(it.id), hov = o.hover === it.id;
     const label = String(di.index + 1);
+    // 单选时顶面中间是“高”手柄，徽标和名字挪到左边，免得挡住
+    const side = sel && o.selection.size === 1;
+    const bx = side ? p.x - 30 : p.x, by = side ? p.y - 4 : p.y - 12;
     ctx.fillStyle = sel ? "#ffffff" : di.color;
     ctx.beginPath();
-    ctx.arc(p.x, p.y - 12, 9, 0, Math.PI * 2);
+    ctx.arc(bx, by, 9, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = sel ? di.color : "#fff";
-    ctx.fillText(label, p.x, p.y - 11.5);
+    ctx.fillText(label, bx, by + 0.5);
     if (sel || hov) {
       const tw = ctx.measureText(di.name).width + 12;
+      const nx = side ? bx - 12 - tw / 2 : p.x, ny = side ? by : p.y - 31;
       ctx.fillStyle = "rgba(24,22,20,0.82)";
-      roundRect(ctx, p.x - tw / 2, p.y - 40, tw, 18, 5);
+      roundRect(ctx, nx - tw / 2, ny - 9, tw, 18, 5);
       ctx.fill();
       ctx.fillStyle = "#f4efe8";
-      ctx.fillText(di.name, p.x, p.y - 30.5);
+      ctx.fillText(di.name, nx, ny + 0.5);
     }
   }
 
@@ -573,3 +578,225 @@ function niceStep(meter: number): number {
 }
 
 const hexRgbK = (k: number) => kelvinRgb(k);
+
+// ---------- 实体编辑：虚影、尺寸标注、手柄、比例人 ----------
+export type HandleKind = "h" | "w+" | "w-" | "t+" | "t-" | "rot";
+export interface HandleHit { kind: HandleKind; x: number; y: number }
+
+function solidPts(s: Solid): V3[] {
+  const cs = Math.cos(rad(s.yaw)), sn = Math.sin(rad(s.yaw));
+  const top = s.bottom - s.h;
+  const P = (lx: number, y: number, lz: number): V3 => [s.cx + lx * cs - lz * sn, y, s.cz + lx * sn + lz * cs];
+  const face = (lz: number): V3[] => [P(-s.w / 2, top, lz), P(s.w / 2, top, lz), P(s.w / 2, s.bottom, lz), P(-s.w / 2, s.bottom, lz)];
+  return [...face(-s.t / 2), ...face(s.t / 2)];
+}
+const EDGES: [number, number][] = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+
+function seg(ctx: CanvasRenderingContext2D, F: ObsFrame, A: V3, B: V3) {
+  const c = clipSeg(toCam(F, A), toCam(F, B), F.near);
+  if (!c) return;
+  const p = camProj(F, c[0]), q = camProj(F, c[1]);
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+  ctx.lineTo(q.x, q.y);
+  ctx.stroke();
+}
+
+function pill(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, fg = "#f6efe6", bg = "rgba(24,22,20,0.86)") {
+  ctx.font = "600 11px ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const w = ctx.measureText(text).width + 10;
+  ctx.fillStyle = bg;
+  roundRect(ctx, x - w / 2, y - 9, w, 18, 5);
+  ctx.fill();
+  ctx.fillStyle = fg;
+  ctx.fillText(text, x, y + 0.5);
+}
+
+const fmtM = (v: number) => (v >= 10 ? v.toFixed(1) : v >= 0.1 ? v.toFixed(2) : v.toFixed(3));
+
+/** 新建时的虚影：占地矩形 + 半透明盒子 + 尺寸 */
+export function drawGhost(ctx: CanvasRenderingContext2D, F: ObsFrame, s: Solid, meter: number, color: string) {
+  const pts = solidPts(s);
+  const rgb = hexRgb(color);
+  ctx.save();
+  // 占地
+  const foot = screenPoly(F, [pts[3], pts[2], pts[6], pts[7]]);
+  if (foot) {
+    ctx.beginPath();
+    foot.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+    ctx.closePath();
+    ctx.fillStyle = rgba(rgb, 0.28);
+    ctx.fill();
+  }
+  for (const f of CUBE_FACES) {
+    const poly = screenPoly(F, f.map((k) => pts[k]));
+    if (!poly) continue;
+    ctx.beginPath();
+    poly.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+    ctx.closePath();
+    ctx.fillStyle = rgba(rgb, 0.07);
+    ctx.fill();
+  }
+  ctx.setLineDash([5, 4]);
+  ctx.strokeStyle = rgba(mixRgb(rgb, [1, 1, 1], 0.35), 0.95);
+  ctx.lineWidth = 1.4;
+  for (const [a, b] of EDGES) seg(ctx, F, pts[a], pts[b]);
+  ctx.setLineDash([]);
+  const top = projectPt(F, [s.cx, s.bottom - s.h, s.cz]);
+  if (top) pill(ctx, top.x, top.y - 16, `${fmtM(s.w / meter)} × ${fmtM(s.t / meter)} m · 高 ${fmtM(s.h / meter)} m`);
+  ctx.restore();
+}
+
+/**
+ * 选中实体的编辑层：尺寸标注、离地投影线、拉伸 / 旋转手柄。返回手柄的屏幕位置（命中测试用）。
+ * 手柄画在面中心外侧固定像素处，拖动时按对应的轴求值。
+ */
+export function drawSolidEdit(ctx: CanvasRenderingContext2D, F: ObsFrame, s: Solid, o: { meter: number; ground: number; support: number; color: string; active: HandleKind | null; hover: HandleKind | null; locked: boolean }): HandleHit[] {
+  const pts = solidPts(s);
+  const cs = Math.cos(rad(s.yaw)), sn = Math.sin(rad(s.yaw));
+  const ax: V3 = [cs, 0, sn], az: V3 = [-sn, 0, cs];
+  const top = s.bottom - s.h, mid = s.bottom - s.h / 2;
+  const C: V3 = [s.cx, mid, s.cz];
+  const hits: HandleHit[] = [];
+  ctx.save();
+  // ---- 离地投影线 ----
+  if (o.support - s.bottom > o.meter * 0.01) {
+    const B: V3 = [s.cx, s.bottom, s.cz], G: V3 = [s.cx, o.support, s.cz];
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = "rgba(240,210,160,0.75)";
+    ctx.lineWidth = 1.2;
+    seg(ctx, F, B, G);
+    ctx.setLineDash([]);
+    const shadow = screenPoly(F, [3, 2, 6, 7].map((k) => [pts[k][0], o.support, pts[k][2]] as V3));
+    if (shadow) {
+      ctx.beginPath();
+      shadow.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+      ctx.closePath();
+      ctx.strokeStyle = "rgba(240,210,160,0.45)";
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    const m = projectPt(F, [s.cx, (s.bottom + o.support) / 2, s.cz]);
+    if (m) pill(ctx, m.x + 34, m.y, `离地 ${fmtM((o.support - s.bottom) / o.meter)} m`, "#f6d9a8");
+  }
+  // ---- 尺寸标注：挑离观察者近的边 ----
+  const eyeDist = (k: number) => len(sub(pts[k], F.eye));
+  const label = (A: V3, B: V3, text: string, push: V3) => {
+    const pa = projectPt(F, add(A, push)), pb = projectPt(F, add(B, push));
+    if (!pa || !pb) return;
+    if (Math.hypot(pb.x - pa.x, pb.y - pa.y) < 30) return; // 太短放不下文字（体块很小 / 正对着这条边）
+    ctx.strokeStyle = "rgba(246,239,230,0.55)";
+    ctx.lineWidth = 1;
+    seg(ctx, F, add(A, push), add(B, push));
+    pill(ctx, (pa.x + pb.x) / 2, (pa.y + pb.y) / 2, text, "#f6efe6", "rgba(24,22,20,0.72)");
+  };
+  const pad = o.meter * 0.06;
+  // 宽：前（-z）或后（+z）底边里近的那条
+  const frontNear = eyeDist(3) + eyeDist(2) < eyeDist(7) + eyeDist(6);
+  const wA = frontNear ? pts[3] : pts[7], wB = frontNear ? pts[2] : pts[6];
+  label(wA, wB, `宽 ${fmtM(s.w / o.meter)}`, add(mul(az, frontNear ? -pad : pad), [0, 0, 0]));
+  // 长：左（-x）或右（+x）底边里近的那条
+  const rightNear = eyeDist(2) + eyeDist(6) < eyeDist(3) + eyeDist(7);
+  const tA = rightNear ? pts[2] : pts[3], tB = rightNear ? pts[6] : pts[7];
+  label(tA, tB, `长 ${fmtM(s.t / o.meter)}`, mul(ax, rightNear ? pad : -pad));
+  // 高：最近的竖边
+  const vk = [0, 1, 4, 5].sort((a, b) => eyeDist(a) - eyeDist(b))[0];
+  const vB = pts[({ 0: 3, 1: 2, 4: 7, 5: 6 } as Record<number, number>)[vk]];
+  const outward = norm([pts[vk][0] - s.cx, 0, pts[vk][2] - s.cz]);
+  label(pts[vk], vB, `高 ${fmtM(s.h / o.meter)}`, mul(outward, pad));
+
+  if (!o.locked) {
+    // ---- 手柄 ----
+    const knob = (kind: HandleKind, A: V3, dir: V3, px: number, glyph: "arrow" | "rot") => {
+      const a = projectPt(F, A), b = projectPt(F, add(A, mul(dir, o.meter * 0.05)));
+      if (!a || !b) return;
+      let dx = b.x - a.x, dy = b.y - a.y;
+      const l = Math.hypot(dx, dy);
+      if (l < 1e-3) { dx = 0; dy = -1; } else { dx /= l; dy /= l; }
+      const x = a.x + dx * px, y = a.y + dy * px;
+      const act = o.active === kind, hov = o.hover === kind;
+      ctx.strokeStyle = "rgba(255,255,255,0.55)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y, act || hov ? 8.5 : 7, 0, Math.PI * 2);
+      ctx.fillStyle = act ? "#ffffff" : kind === "rot" ? "#f0a04b" : o.color;
+      ctx.fill();
+      ctx.strokeStyle = "rgba(20,18,16,0.9)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.strokeStyle = act ? o.color : "#fff";
+      ctx.fillStyle = act ? o.color : "#fff";
+      ctx.lineWidth = 1.5;
+      if (glyph === "arrow") {
+        // 沿拖动方向的小箭头
+        ctx.beginPath();
+        ctx.moveTo(x - dx * 3.5 + dy * 3, y - dy * 3.5 - dx * 3);
+        ctx.lineTo(x + dx * 3.5, y + dy * 3.5);
+        ctx.lineTo(x - dx * 3.5 - dy * 3, y - dy * 3.5 + dx * 3);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(x, y, 3.6, -Math.PI * 0.9, Math.PI * 0.45);
+        ctx.stroke();
+      }
+      hits.push({ kind, x, y });
+    };
+    knob("h", [s.cx, top, s.cz], [0, -1, 0], 26, "arrow");
+    knob("w+", add(C, mul(ax, s.w / 2)), ax, 22, "arrow");
+    knob("w-", add(C, mul(ax, -s.w / 2)), mul(ax, -1), 22, "arrow");
+    knob("t+", add(C, mul(az, s.t / 2)), az, 22, "arrow");
+    knob("t-", add(C, mul(az, -s.t / 2)), mul(az, -1), 22, "arrow");
+    // 旋转：前方地面上的旋钮 + 一段弧
+    const R = Math.hypot(s.w, s.t) / 2 + o.meter * 0.12;
+    const ring: V3[] = [];
+    for (let k = 0; k <= 24; k++) {
+      const a = rad(s.yaw) + Math.PI / 2 + (k / 24 - 0.5) * 1.1;
+      ring.push([s.cx + Math.cos(a) * R * -1, s.bottom, s.cz + Math.sin(a) * R * -1]);
+    }
+    ctx.strokeStyle = o.active === "rot" || o.hover === "rot" ? "rgba(240,160,75,0.95)" : "rgba(240,160,75,0.55)";
+    ctx.lineWidth = 2;
+    for (let k = 0; k < ring.length - 1; k++) seg(ctx, F, ring[k], ring[k + 1]);
+    const RP: V3 = add([s.cx, s.bottom, s.cz], mul(az, -R));
+    knob("rot", RP, mul(az, -1), 0.001, "rot");
+  }
+  ctx.restore();
+  return hits;
+}
+
+/** 比例人：1.7 米高的剪影，脚踩在 feet，面朝观察者 */
+export function drawScaleFigure(ctx: CanvasRenderingContext2D, F: ObsFrame, feet: V3, meter: number) {
+  const a = projectPt(F, feet), b = projectPt(F, add(feet, [0, -1.7 * meter, 0]));
+  if (!a || !b) return;
+  const hpx = Math.hypot(b.x - a.x, b.y - a.y);
+  if (hpx < 8) return;
+  const ux = (b.x - a.x) / hpx, uy = (b.y - a.y) / hpx; // 向上
+  const px = -uy, py = ux; // 横向
+  const at = (t: number, s: number) => ({ x: a.x + ux * hpx * t + px * hpx * s, y: a.y + uy * hpx * t + py * hpx * s });
+  ctx.save();
+  ctx.fillStyle = "rgba(220,214,204,0.32)";
+  ctx.strokeStyle = "rgba(240,234,224,0.6)";
+  ctx.lineWidth = 1;
+  // 头
+  const hc = at(0.925, 0);
+  ctx.beginPath();
+  ctx.arc(hc.x, hc.y, hpx * 0.065, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // 身体（梯形 + 腿）
+  const poly = [at(0.83, -0.12), at(0.83, 0.12), at(0.5, 0.1), at(0.0, 0.07), at(0.0, 0.015), at(0.45, 0), at(0.0, -0.015), at(0.0, -0.07), at(0.5, -0.1)];
+  ctx.beginPath();
+  poly.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  const lb = at(1.0, 0);
+  pill(ctx, lb.x, lb.y - 12, "1.7 m", "#e9e2d8", "rgba(24,22,20,0.6)");
+  ctx.restore();
+}

@@ -101,7 +101,8 @@ export function TopBar() {
           <PageTab key={p.id} id={p.id} name={p.name} kind={p.id === s.pageId ? s.doc?.kind || p.doc.kind : p.doc.kind}
             active={p.id === s.pageId} pending={pendingPages.has(p.id)} />
         ))}
-        <button type="button" className="btn btn-ghost btn-sm btn-icon" title="新建一页（同系列共享对话）" onClick={() => void addPage()}>
+        <button type="button" className="btn btn-ghost btn-sm btn-icon" title="新建画布：选尺寸和镜头视角（Shift+点击 直接新建同尺寸空白页；同系列共享对话）"
+          onClick={(e) => (e.shiftKey ? void addPage() : setUi({ modal: "newpage" }))}>
           <Plus size={15} />
         </button>
       </div>

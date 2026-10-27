@@ -8,13 +8,14 @@ import {
 import { applyChanges, diffDocs } from "./lib/changeset";
 import { normalizeLighting, presetById, presetLighting } from "./lib/lighting";
 import { buildAssistPrompt, loadAssistPrefs, type AssistPrefs } from "./lib/assist";
-import { clampBBox, clone, deepEqual, defaultCamera, expandGroups, fitItemsToCanvas, groupNumbers, itemName, newId, normalizeDoc, pruneGroups } from "./lib/doc";
+import { VIEW_PRESETS, holdCamera, patchSolid, solidFromView, solidToItem, tableUnderCamera, type Solid } from "./lib/solid";
+import { clampBBox, clone, deepEqual, defaultCamera, emptyDoc, defaultPerspective, expandGroups, fitItemsToCanvas, groupNumbers, itemName, newId, normalizeDoc, pruneGroups } from "./lib/doc";
 import type {
   AppSettings, Ask, Attachment, BBox, Camera, CompileResult, Doc, ItemLabel, LayoutDraft, LayoutItem, Lighting, Message,
   Page, Proposal, Series, Session, SkillsState, Step,
 } from "./types";
 
-export type Modal = null | "settings" | "skills" | "reverse" | "archive" | "revisions" | "quick" | "draft";
+export type Modal = null | "settings" | "skills" | "reverse" | "archive" | "revisions" | "quick" | "draft" | "newpage";
 export type Tool = "select" | "draw";
 
 export interface Toast {
@@ -390,6 +391,42 @@ export async function addPage(opts: { name?: string; doc?: Doc; kind?: Doc["kind
   return p;
 }
 
+/** 新建画布：类型、尺寸、预设镜头视角（可放一张桌子当台面），可直接打开镜头调度 */
+export interface NewCanvasOpts {
+  name?: string;
+  kind: Doc["kind"];
+  width: number;
+  height: number;
+  view: Partial<Camera> | null;
+  table?: boolean;
+  director?: boolean;
+}
+export async function createCanvas(o: NewCanvasOpts) {
+  const doc = emptyDoc(o.kind);
+  const L = doc.layout;
+  L.width = o.width;
+  L.height = o.height;
+  L.perspective = defaultPerspective(o.width, o.height);
+  if (o.view && o.kind === "layout") {
+    L.camera = clampCamera({ ...defaultCamera(), ...o.view, enabled: true });
+    if (o.table) {
+      const s = tableUnderCamera(L);
+      if (s) {
+        const r = solidToItem(s, L.width, L.height);
+        const it: LayoutItem = { id: newId(), label: "object", name: "桌面", caption: "", bbox: r.bbox, body: r.body, color: 0, depth: "auto" };
+        const after = { ...L, items: [it] };
+        const cam = holdCamera(L, after);
+        L.items = [it];
+        if (cam) L.camera = cam;
+      }
+    }
+  }
+  set({ modal: null });
+  const p = await addPage({ name: o.name?.trim() || undefined, doc, kind: o.kind });
+  if (o.director && o.kind === "layout" && o.view) openDirector();
+  return p;
+}
+
 export async function duplicatePage(pid: string) {
   await flushSave();
   const p = await api.duplicatePage(pid);
@@ -460,7 +497,7 @@ export function addItem(bbox: number[], label?: ItemLabel, extra?: Partial<Layou
   let color = L.items.length % 6;
   for (let c = 0; c < 6; c++) if (!used.has(c)) { color = c; break; }
   // 移过机位后画的世界框：bbox 是基准机位下的位置，可能在画布外，不能夹到画布里
-  const world = !!extra?.body && (extra.body.anchor || "world") === "world" && cameraMoved(L);
+  const world = !!extra?.body && (extra.body.anchor || "world") === "world" && (cameraMoved(L) || !!extra.body.exact);
   const it: LayoutItem = {
     id, label: lab, caption: "", bbox: world ? (bbox.map((v) => Math.round(v)) as LayoutItem["bbox"]) : clampBBox(bbox, L.width, L.height), color, depth: "auto",
     ...(lab === "text" ? { text: "" } : {}),
@@ -476,9 +513,35 @@ export function addItemInView(rect: BBox, start?: { x: number; y: number }, labe
   const doc = get().doc;
   if (!doc) return;
   const lab = label || get().drawLabel;
+  // 先按“放在地面 / 桌面上的实体”反推（鸟瞰时画的桌子就是扁的台面，不是竖起来的柱子）；地平线以上等解不出时退回竖立的前脸体块
+  const sol = lab !== "text" ? solidFromView(doc.layout, rect, lab) : null;
+  if (sol) return addItem(sol.bbox, lab, { body: sol.body }, sol.camera);
   const r = itemFromView(doc.layout, rect, lab, start);
   if (!r) return addItem(rect, lab);
   return addItem(r.bbox, lab, { body: r.body }, r.camera);
+}
+
+/** 按真实尺寸加一个实体体块（3D 场景里画出来的）；主体变了同时补偿机位 */
+export function addSolidItem(s: Solid, label: ItemLabel, extra: Partial<LayoutItem> = {}) {
+  const doc = get().doc;
+  if (!doc) return;
+  const L = doc.layout;
+  const r = solidToItem(s, L.width, L.height);
+  const camera = holdCamera(L, { ...L, items: [...L.items, { id: "__new", label, caption: "", bbox: r.bbox, body: r.body } as LayoutItem] });
+  return addItem(r.bbox, label, { ...extra, body: r.body }, camera);
+}
+
+/** 按实体改一个框（3D 拉伸、键盘、面板数值）；锁定的不改 */
+export function updateSolid(id: string, s: Solid, coalesce?: string, extra?: Partial<LayoutItem>) {
+  const L = get().doc?.layout;
+  const it = L?.items.find((x) => x.id === id);
+  if (!L || !it) return;
+  if (it.locked) return toast("锁定的框不能修改");
+  editLayout((d) => {
+    const p = patchSolid(d, id, s);
+    if (!p) return d;
+    return { ...d, items: d.items.map((x) => (x.id === id ? { ...x, ...p.patch, ...(extra || {}) } : x)), ...(p.camera ? { camera: p.camera } : {}) };
+  }, coalesce);
 }
 
 export function updateItem(id: string, patch: Partial<LayoutItem>, coalesce?: string) {
@@ -710,6 +773,24 @@ export function openDirector() {
   if (!d || d.kind !== "layout") return;
   if (!d.layout.camera?.enabled) toggleCamera(true);
   set({ director: true, freeCam: false, modal: null });
+}
+
+/** 套用镜头视角预设（新建画布 / 页面面板里用）；“暂不设置”= 关掉摄像机 */
+export function applyViewPreset(id: string) {
+  const v = VIEW_PRESETS.find((x) => x.id === id);
+  const d = get().doc?.layout;
+  if (!v || !d) return;
+  if (!v.cam) return toggleCamera(false);
+  if (!d.camera?.enabled) toggleCamera(true);
+  setCamera({ ...defaultCamera(), ...v.cam, enabled: true }, "");
+  // 桌面俯拍：画面里还没有桌子 / 台面时顺手放一张
+  const L = get().doc?.layout;
+  if (v.table && L && !L.items.some((x) => /桌|台面/.test(x.name || ""))) {
+    const s = tableUnderCamera(L);
+    if (!s) return;
+    addSolidItem(s, "object", { name: "桌面" });
+    toast("已放一张桌子当台面（1.6 × 1.0 m）", "ok");
+  }
 }
 
 export function resetCamera() {

@@ -11,6 +11,8 @@ export interface Body {
   thickness: number;
   yaw: number;
   anchor: Anchor;
+  /** 精确体块（按真实尺寸建的）：投影不做身份映射，原框只是它在初始机位下的前脸 */
+  exact?: boolean;
 }
 
 export interface LayoutItem {

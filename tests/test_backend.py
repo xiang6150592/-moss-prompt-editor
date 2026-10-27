@@ -283,3 +283,15 @@ def test_agent_draft_mode(client, monkeypatch):
     assert [it["name"] for it in L["items"]] == ["街道", "侦探"]
     assert L["camera"]["enabled"] and L["camera"]["pitch"] == -12
     assert L["lighting"]["preset"] == "neon" and L["lighting"]["enabled"]
+
+
+def test_sanitize_body_keeps_exact_solid():
+    from server.layout_core import sanitize_body
+    b = sanitize_body({"z": 1.335621234, "thickness": 0.5622149, "yaw": 90, "anchor": "world", "exact": True})
+    assert b["exact"] is True
+    assert b["z"] == 1.33562 and b["thickness"] == 0.56221
+    # 非 3D 体块、或 exact 不是 True 时不带 exact
+    assert "exact" not in sanitize_body({"z": 1, "thickness": 0.3, "anchor": "screen", "exact": True})
+    assert "exact" not in sanitize_body({"z": 1, "thickness": 0.3, "exact": "yes"})
+    old = sanitize_body({"z": 1.23456, "thickness": 0.3})
+    assert "exact" not in old and old["z"] == 1.2346

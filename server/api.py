@@ -412,7 +412,7 @@ class CompileBody(BaseModel):
 def api_compile(body: CompileBody):
     draft = sanitize_draft(body.draft)
     prompt, err = compile_safe(draft, body.view)
-    checks = compile_checks(draft) if "items" in draft else []
+    checks = compile_checks(draft, body.view) if "items" in draft else []
     if err:
         raise HTTPException(status_code=400, detail=err)
     s = load_settings()

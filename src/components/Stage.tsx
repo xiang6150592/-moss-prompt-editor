@@ -4,7 +4,8 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
-import { cameraMoved, dragInView, moveTargets, projectLayout, type Projection } from "../lib/camera";
+import { cameraMoved, cameraView, dragInView, isExact, moveTargets, projectLayout, type Projection } from "../lib/camera";
+import { resizeSolidInView } from "../lib/solid";
 import { diffDocs } from "../lib/changeset";
 import { boxColor, clampBBox, groupNumbers, itemName, normalizeDoc } from "../lib/doc";
 import {
@@ -115,7 +116,9 @@ type Drag =
   | { kind: "move"; ids: string[]; start: Record<string, BBox>; x: number; y: number; moved: boolean;
       /** 镜头视图里拖：按投影反推原框和远近；grab 是鼠标抓住的框，ids 这组一起做刚体平移 */
       view?: { base: LayoutDraft; grab: string } }
-  | { kind: "resize"; id: string; start: BBox; handle: string; x: number; y: number }
+  | { kind: "resize"; id: string; start: BBox; handle: string; x: number; y: number;
+      /** 镜头视图里改大小：start 是投影框，按实体尺寸反推（底面不动） */
+      view?: LayoutDraft }
   | { kind: "draw"; x0: number; y0: number; x1: number; y1: number }
   | { kind: "marquee"; x0: number; y0: number; x1: number; y1: number; add: boolean }
   | { kind: "orbit"; x: number; y: number; cam: Record<string, number>; pan: boolean };
@@ -208,6 +211,8 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
   const cam = L.camera;
   const camOn = !!cam?.enabled;
   const moved = cameraMoved(L);
+  // 画面显示投影：动过机位，或有精确体块（3D 里按真实尺寸建的）
+  const viewOn = cameraView(L);
   const proj: Projection | null = useMemo(() => (camOn ? projectLayout(L) : null), [L, camOn]);
   const pending = pendingProposalFor(s, s.pageId);
   const changes = useMemo(() => (pending ? diffDocs(normalizeDoc(pending.proposal.base), normalizeDoc(pending.proposal.proposed)) : []), [pending]);
@@ -241,6 +246,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
     if (it.locked || s.tool === "draw" || !ids.includes(it.id)) return;
     // 拖动带上同组的框；镜头视图里还按「自由 / 冻结」决定带上哪些
     const t = moveTargets(L, ids, moved ? s.moveScope : "free", it.id, solo);
+    const inView = moved || (viewOn && t.ids.some((id) => { const x = L.items.find((y) => y.id === id); return !!x && isExact(x); }));
     if (!t.ids.length) {
       if (t.pinned) toast("组里有锁定的框，整组不能移动（按住 Alt 拖动可以单独移动没锁定的框）");
       return;
@@ -248,12 +254,18 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
     const start: Record<string, BBox> = {};
     for (const x of L.items) if (t.ids.includes(x.id)) start[x.id] = [...x.bbox] as BBox;
     const p = toCanvas(e);
-    setDrag({ kind: "move", ids: t.ids, start, x: p.x, y: p.y, moved: false, view: moved ? { base: L, grab: it.id } : undefined });
+    setDrag({ kind: "move", ids: t.ids, start, x: p.x, y: p.y, moved: false, view: inView ? { base: L, grab: it.id } : undefined });
   };
 
   const onHandleDown = (e: React.PointerEvent, it: LayoutItem, h: string) => {
     e.stopPropagation();
     const p = toCanvas(e);
+    const pr = proj?.items[it.id];
+    if (viewOn && pr && pr.anchor === "world" && (moved || isExact(it)) && pr.corners?.every(Boolean)) {
+      setDrag({ kind: "resize", id: it.id, start: [...pr.raw] as BBox, handle: h, x: p.x, y: p.y, view: L });
+      return;
+    }
+    if (viewOn && pr?.anchor === "world" && (moved || isExact(it))) return toast("这个体块有一部分在镜头后面，先把它拉回画面再改大小");
     setDrag({ kind: "resize", id: it.id, start: [...it.bbox] as BBox, handle: h, x: p.x, y: p.y });
   };
 
@@ -320,6 +332,15 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
           if (Math.abs(w / ar) > Math.abs(hh)) { const nh = w / ar; if (h.includes("n")) y1 = y2 - nh; else y2 = y1 + nh; }
           else { const nw = hh * ar; if (h.includes("w")) x1 = x2 - nw; else x2 = x1 + nw; }
         }
+        if (d.view) {
+          // 镜头视图：要的是投影框，按实体反推宽 / 高 / 长（底面、朝向不动）
+          const mn = 8;
+          if (x2 - x1 < mn) h.includes("w") ? (x1 = x2 - mn) : (x2 = x1 + mn);
+          if (y2 - y1 < mn) h.includes("n") ? (y1 = y2 - mn) : (y2 = y1 + mn);
+          const r = resizeSolidInView(d.view, d.id, [x1, y1, x2, y2]);
+          if (r) applyMove({ patches: { [d.id]: { bbox: r.bbox, body: r.body } }, camera: r.camera }, key);
+          return;
+        }
         updateItems({ [d.id]: { bbox: clampBBox([x1, y1, x2, y2], W, H, 8) } }, key);
       } else {
         setDrag({ ...d, x1: Math.max(0, Math.min(W, p.x)), y1: Math.max(0, Math.min(H, p.y)) });
@@ -332,7 +353,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
         const b = clampBBox([d.x0, d.y0, d.x1, d.y1], W, H, 8);
         if ((b[2] - b[0]) * scale > 6 && (b[3] - b[1]) * scale > 6) {
           // 镜头视图：按当前机位反推原框和远近，画出来的就是在画面里看到的
-          if (moved) addItemInView(b, { x: d.x0, y: d.y0 });
+          if (viewOn) addItemInView(b, { x: d.x0, y: d.y0 });
           else addItem(b);
         } else select([]);
       } else if (d?.kind === "marquee") {
@@ -340,7 +361,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
         if ((x2 - x1) * scale < 4 && (y2 - y1) * scale < 4) select(d.add ? s.selection : []);
         else {
           const hit = L.items.filter((it) => {
-            const b = moved && proj ? proj.items[it.id].raw : it.bbox;
+            const b = viewOn && proj ? proj.items[it.id].raw : it.bbox;
             return b[0] < x2 && b[2] > x1 && b[1] < y2 && b[3] > y1;
           }).map((it) => it.id);
           select(withGroup(d.add ? Array.from(new Set([...s.selection, ...hit])) : hit));
@@ -355,7 +376,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
       window.removeEventListener("pointerup", up);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drag?.kind, scale, W, H, moved]);
+  }, [drag?.kind, scale, W, H, moved, viewOn]);
 
   // 原生 wheel 监听（passive: false）：React 的 onWheel 是被动的，preventDefault 无效，
   // Ctrl+滚轮会把整个 WebView 一起缩放。
@@ -382,7 +403,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
   const groupNo = groupNumbers(L.items);
   const shown = (it: LayoutItem): BBox => {
     const pr = proj?.items[it.id];
-    return moved && pr ? (pr.visible ? pr.bbox : pr.raw) : it.bbox;
+    return viewOn && pr ? (pr.visible ? pr.bbox : pr.raw) : it.bbox;
   };
   // 选中的组：画一个虚线外框
   const groupBoxes = [...groupNo.keys()].filter((g) => L.items.some((it) => it.group === g && sel.has(it.id))).map((g) => {
@@ -391,22 +412,22 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
     const pad = 5 / scale;
     return { g, n: groupNo.get(g)!, b: [Math.min(...bs.map((b) => b[0])) - pad, Math.min(...bs.map((b) => b[1])) - pad, Math.max(...bs.map((b) => b[2])) + pad, Math.max(...bs.map((b) => b[3])) + pad] as BBox };
   }).filter(Boolean) as { g: string; n: number; b: BBox }[];
-  const offCount = moved && proj ? L.items.filter((it) => !it.hidden && proj.items[it.id]?.anchor === "world" && !proj.items[it.id].visible).length : 0;
+  const offCount = viewOn && proj ? L.items.filter((it) => !it.hidden && proj.items[it.id]?.anchor === "world" && !proj.items[it.id].visible).length : 0;
   const boxes = L.items.map((it, i) => {
     const pr = proj?.items[it.id];
-    const b = moved && pr ? (pr.visible ? pr.bbox : pr.raw) : it.bbox;
+    const b = viewOn && pr ? (pr.visible ? pr.bbox : pr.raw) : it.bbox;
     const color = boxColor(it, i);
     const isSel = sel.has(it.id);
-    const off = moved && pr && !pr.visible;
+    const off = viewOn && pr && !pr.visible;
     const style: React.CSSProperties = {
       left: b[0] * scale, top: b[1] * scale, width: Math.max(2, (b[2] - b[0]) * scale), height: Math.max(2, (b[3] - b[1]) * scale),
       ["--c" as any]: color,
-      zIndex: moved && proj ? 10 + proj.order.indexOf(it.id) : 10 + i,
+      zIndex: viewOn && proj ? 10 + proj.order.indexOf(it.id) : 10 + i,
     };
     return (
       <div
         key={it.id}
-        className={cx("box", isSel && "sel", it.hidden && "is-hidden", it.locked && "is-locked", off && "is-off", moved && "is-proj", s.tool === "draw" && "drawing")}
+        className={cx("box", isSel && "sel", it.hidden && "is-hidden", it.locked && "is-locked", off && "is-off", viewOn && "is-proj", s.tool === "draw" && "drawing")}
         style={style}
         onPointerDown={(e) => onBoxDown(e, it)}
         onDoubleClick={() => it.group && select([it.id])}
@@ -419,7 +440,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
           {off && <span className="box-tag-off">出画</span>}
         </div>
         {it.label === "text" && it.text && <div className="box-text">{it.text}</div>}
-        {isSel && !moved && !it.locked && s.selection.length === 1 && HANDLES.map((h) => (
+        {isSel && !it.locked && s.selection.length === 1 && HANDLES.map((h) => (
           <div key={h} className={`handle h-${h}`} onPointerDown={(e) => onHandleDown(e, it, h)} />
         ))}
       </div>
@@ -499,7 +520,7 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
     >
       {/* 只在比可见区大时才撑开；否则由 min-width/min-height:100% 填满滚动区，不会多出 1px */}
       <div className="tray-inner" style={{ width: bw + TRAY_PAD_X, height: bh + TRAY_PAD_Y + TRAY_CAPTION_H }}>
-        <div ref={board} className={cx("artboard", moved && "cam-view")} style={{ width: bw, height: bh }}>
+        <div ref={board} className={cx("artboard", viewOn && "cam-view")} style={{ width: bw, height: bh }}>
           <div className="artboard-grid" />
           {svg}
           {boxes}
@@ -511,10 +532,10 @@ function CanvasView({ zoom, setZoom }: { zoom: number; setZoom: (z: number) => v
           <span>{W} × {H}</span>
           {camOn && (
             <span className="cap-right">
-              <span className="warm-text ellipsis" title={moved ? "拖动框时按透视换算回原框位置和远近；要改大小，先点「定为基准」" : "摄像机在初始机位，框就是原框"}>
-                <CameraIcon size={11} />{moved ? "镜头视图 · 框可直接拖动" : "初始机位"}
+              <span className="warm-text ellipsis" title={viewOn ? "框是体块在当前镜头里的投影：拖动按透视换算回原框位置和远近；拖手柄按真实尺寸改宽 / 高 / 长（底面不动）" : "摄像机在初始机位，框就是原框"}>
+                <CameraIcon size={11} />{viewOn ? (moved ? "镜头视图 · 框可直接拖动、改大小" : "初始机位 · 含 3D 实体") : "初始机位"}
               </span>
-              {moved && offCount > 0 && (
+              {viewOn && offCount > 0 && (
                 <button type="button" className="btn btn-xs btn-warm" onPointerDown={(e) => e.stopPropagation()} onClick={() => bringAllIntoFrame()}
                   title="镜头不动，把完全出画的 3D 体块（连同同组的框）挪回画面里">
                   <Magnet size={11} />拉回 {offCount}

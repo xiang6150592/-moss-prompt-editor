@@ -162,6 +162,40 @@ export function Modal(p: {
   );
 }
 
+// ---------- 滚轮 ----------
+/**
+ * 非被动的滚轮监听（React 的 onWheel 是被动的，preventDefault 无效，面板会跟着滚）。
+ * fn 返回 true 表示吃掉这次滚动。
+ */
+export function useWheel<T extends HTMLElement>(fn: (e: WheelEvent) => boolean | void) {
+  const ref = useRef<T>(null);
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const h = (e: WheelEvent) => {
+      if (fnRef.current(e)) e.preventDefault();
+    };
+    el.addEventListener("wheel", h, { passive: false });
+    return () => el.removeEventListener("wheel", h);
+  }, []);
+  return ref;
+}
+
+/** 把滚轮事件换算成整格步数：鼠标一格 = 1 步，触控板的小增量累积到一格再算（向上 = +） */
+export function wheelSteps(e: WheelEvent, acc: { v: number }): number {
+  const d = e.deltaY || e.deltaX;
+  if (!d) return 0;
+  const px = e.deltaMode === 1 ? d * 40 : e.deltaMode === 2 ? d * 400 : d;
+  if (Math.abs(px) >= 40) { acc.v = 0; return px < 0 ? 1 : -1; }
+  acc.v += px;
+  if (Math.abs(acc.v) < 40) return 0;
+  const n = acc.v < 0 ? 1 : -1;
+  acc.v = 0;
+  return n;
+}
+
 // ---------- 刻度拨杆（摄像机参数 / 体块参数） ----------
 export function Dial(p: {
   label: string;
@@ -181,6 +215,14 @@ export function Dial(p: {
 }) {
   const track = useRef<HTMLDivElement>(null);
   const [edit, setEdit] = useState<string | null>(null);
+  const acc = useRef({ v: 0 });
+  // 整行都能滚：普通 = 粗调，Shift = 细调
+  const row = useWheel<HTMLDivElement>((e) => {
+    if (p.disabled || edit !== null) return false;
+    const n = wheelSteps(e, acc.current);
+    if (n) p.onChange(clamp(p.value + n * p.step * (e.shiftKey ? 1 : p.step < 1 ? 5 : 1)));
+    return true;
+  });
   const digits = p.digits ?? (p.step >= 1 ? 0 : p.step >= 0.1 ? 1 : 2);
   const toT = (v: number) => {
     if (p.log) return (Math.log(v) - Math.log(p.min)) / (Math.log(p.max) - Math.log(p.min));
@@ -219,7 +261,7 @@ export function Dial(p: {
   };
   const fmt = (v: number) => v.toFixed(digits);
   return (
-    <div className={cx("dial", p.disabled && "disabled", p.warm && "warm")} title={p.title}>
+    <div ref={row} className={cx("dial", p.disabled && "disabled", p.warm && "warm")} title={p.title ? `${p.title}\n滚轮调整（Shift 细调）` : "滚轮调整（Shift 细调）"}>
       <span className="dial-label" onDoubleClick={p.onReset} title={p.onReset ? "双击复位" : undefined}>
         {p.label}
       </span>
@@ -230,11 +272,6 @@ export function Dial(p: {
         ref={track}
         className="dial-track"
         onPointerDown={drag}
-        onWheel={(e) => {
-          if (p.disabled) return;
-          e.preventDefault();
-          p.onChange(clamp(p.value + (e.deltaY < 0 ? 1 : -1) * p.step * (e.shiftKey ? 1 : p.step < 1 ? 5 : 1)));
-        }}
       >
         <div className="dial-ticks" />
         <div className="dial-fill" style={{ left: `${Math.min(t, tz) * 100}%`, width: `${Math.abs(t - tz) * 100}%` }} />
@@ -269,6 +306,54 @@ export function Dial(p: {
   );
 }
 
+// ---------- 小数框（米、倍数）：方向键 / 滚轮步进 ----------
+/** 普通 = step，Shift = step/10（细调），Ctrl = step×10；小于 0.1 时多显示一位 */
+export function DecField({ label, value, onChange, step = 0.1, digits = 2, unit, disabled, title, min, max }: {
+  label: string; value: number; onChange: (v: number) => void; step?: number; digits?: number; unit?: string; disabled?: boolean; title?: string; min?: number; max?: number;
+}) {
+  const fmt = (v: number) => (Number.isFinite(v) ? v.toFixed(Math.abs(v) > 0 && Math.abs(v) < 0.1 ? Math.max(digits, 3) : digits) : "—");
+  const [v, setV] = useState(fmt(value));
+  const [focus, setFocus] = useState(false);
+  useEffect(() => { if (!focus) setV(fmt(value)); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [value, focus]);
+  const lim = (n: number) => Math.max(min ?? -Infinity, Math.min(max ?? Infinity, Math.round(n * 1e4) / 1e4));
+  const commit = () => {
+    const n = parseFloat(v);
+    if (Number.isFinite(n) && Math.abs(n - value) > 1e-9) onChange(lim(n));
+    else setV(fmt(value));
+  };
+  const stepOf = (e: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => step * (e.shiftKey ? 0.1 : e.ctrlKey || e.metaKey ? 10 : 1);
+  const acc = useRef({ v: 0 });
+  const ref = useWheel<HTMLLabelElement>((e) => {
+    if (disabled) return false;
+    const k = wheelSteps(e, acc.current);
+    if (k) {
+      const base = focus ? parseFloat(v) || 0 : value;
+      const n = lim(base + k * stepOf(e));
+      setV(fmt(n));
+      onChange(n);
+    }
+    return true;
+  });
+  return (
+    <label ref={ref} className={cx("decfield", disabled && "disabled")} title={`${title ? title + "\n" : ""}滚轮 / ↑↓ 调整（Shift 细调，Ctrl 粗调）`}>
+      <span>{label}</span>
+      <input className="input input-sm num" value={v} disabled={disabled}
+        onFocus={() => setFocus(true)} onBlur={() => { setFocus(false); commit(); }}
+        onChange={(e) => setV(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const n = lim((parseFloat(v) || 0) + (e.key === "ArrowUp" ? 1 : -1) * stepOf(e));
+            setV(fmt(n));
+            onChange(n);
+          }
+        }} />
+      {unit && <em>{unit}</em>}
+    </label>
+  );
+}
+
 // ---------- 数字框（位置 / 尺寸） ----------
 export function NumField(p: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number; disabled?: boolean; width?: number }) {
   const [v, setV] = useState(String(Math.round(p.value)));
@@ -278,8 +363,19 @@ export function NumField(p: { label: string; value: number; onChange: (v: number
     if (Number.isFinite(n)) p.onChange(Math.max(p.min ?? -Infinity, Math.min(p.max ?? Infinity, n)));
     else setV(String(Math.round(p.value)));
   };
+  const acc = useRef({ v: 0 });
+  const ref = useWheel<HTMLLabelElement>((e) => {
+    if (p.disabled) return false;
+    const k = wheelSteps(e, acc.current);
+    if (k) {
+      const n = Math.max(p.min ?? -Infinity, Math.min(p.max ?? Infinity, Math.round(p.value) + k * (e.shiftKey ? 10 : 1)));
+      setV(String(n));
+      p.onChange(n);
+    }
+    return true;
+  });
   return (
-    <label className="numfield" style={{ width: p.width }}>
+    <label ref={ref} className="numfield" style={{ width: p.width }} title="滚轮 / ↑↓ 调整（Shift ×10）">
       <span>{p.label}</span>
       <input
         className="input input-sm num"

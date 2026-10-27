@@ -3,10 +3,11 @@ import {
   LayoutGrid, Lock, LockOpen, RectangleHorizontal, RectangleVertical, Trash2, Type, User, Repeat2, Layers3, Group, Ungroup, Link2, Magnet, AlignVerticalSpaceAround,
 } from "lucide-react";
 import React, { useState } from "react";
-import { bodyOf, cameraMoved, estimateBody, projectLayout } from "../lib/camera";
+import { bodyOf, cameraView, estimateBody, isExact, projectLayout } from "../lib/camera";
+import { VIEW_PRESETS, solidOf, viewPresetOf } from "../lib/solid";
 import { boxColor, expandGroups, groupNumbers, itemName, snap16, wholeGroup } from "../lib/doc";
 import {
-  alignGroup, bringIntoFrame, commit, duplicateItems, editLayout, groupSelection, moveItemTo, removeItems, reorder, select, setCanvasSize, ungroupSelection,
+  alignGroup, applyViewPreset, bringIntoFrame, commit, duplicateItems, editLayout, groupSelection, moveItemTo, removeItems, reorder, select, setCanvasSize, ungroupSelection,
   updateItem, useStore, useWorkState } from "../store";
 import type { Anchor, CanvasKind, DepthTier, ItemLabel, LayoutItem } from "../types";
 import { ANCHOR_TEXT, DEPTH_TEXT, LABEL_TEXT, RESOLUTIONS } from "../types";
@@ -62,6 +63,25 @@ function CanvasSize() {
   );
 }
 
+/** 镜头视角：先定从哪儿拍，再画框（画框会按这个机位落到地面 / 桌面上） */
+function ViewChips() {
+  const cam = useStore((s) => s.doc!.layout.camera);
+  const cur = viewPresetOf(cam);
+  return (
+    <div className="field">
+      <label>镜头视角<span className="spacer" />{cam?.enabled && !cur && <span className="hint">自定义机位</span>}</label>
+      <div className="view-chips">
+        {VIEW_PRESETS.map((v) => (
+          <button key={v.id} type="button" className={cx("chip", cur === v.id && "accent")} title={v.hint} onClick={() => applyViewPreset(v.id)}>
+            {v.name}
+          </button>
+        ))}
+      </div>
+      <span className="hint">先选视角再画框：俯拍 / 鸟瞰时画的框会当成平放在地面、桌面上的东西。</span>
+    </div>
+  );
+}
+
 function PageSection() {
   const doc = useStore((s) => s.doc!);
   const L = doc.layout;
@@ -81,6 +101,7 @@ function PageSection() {
             <label>画布</label>
             <CanvasSize />
           </div>
+          <ViewChips />
           <div className="field">
             <label>整体描述 <span className="spacer" /><span className="muted num">{L.summary.caption.length}</span></label>
             <AutoTextarea className="textarea" minRows={3} maxRows={10} value={L.summary.caption}
@@ -250,7 +271,7 @@ function Inspector() {
   const setBody = (patch: Partial<typeof body>, key: string) => updateItem(it.id, { body: { ...body, ...patch } }, key);
   const [x1, y1, x2, y2] = it.bbox;
   const mates = it.group ? L.items.filter((x) => x.group === it.group && x.id !== it.id) : [];
-  const pr = cameraMoved(L) && body.anchor === "world" && !it.hidden ? projectLayout(L).items[it.id] : null;
+  const pr = cameraView(L) && body.anchor === "world" && !it.hidden ? projectLayout(L).items[it.id] : null;
   const offFrame = !!pr && (!pr.visible || pr.partial);
   return (
     <Section id="insp" title="属性" right={
@@ -325,6 +346,16 @@ function Inspector() {
               v: a, t: ANCHOR_TEXT[a],
               title: a === "world" ? "场景里的物体，随机位投影" : a === "screen" ? "贴在屏幕上（标题、字幕），不随机位变化" : "无穷远的背景板（天空、远景），不随机位变化",
             }))} />
+          {body.anchor === "world" && isExact(it) && (() => {
+            const so = solidOf(it, L), m = L.height / 3;
+            return (
+              <div className="exact-note">
+                <span className="chip warm">实体</span>
+                <span className="num">{(so.w / m).toFixed(2)} × {(so.h / m).toFixed(2)} × {(so.t / m).toFixed(2)} m</span>
+                <span className="hint">按真实尺寸建的；在镜头调度 → 体块里改尺寸更直观</span>
+              </div>
+            );
+          })()}
           {body.anchor === "world" && (
             <div className="col" style={{ gap: 2, marginTop: 6 }}>
               <Dial warm label="远近" value={body.z} min={0.15} max={12} step={0.01} log digits={2} zero={1} unit="×" title="相对基准深度：1 = 主体平面，越大越远"

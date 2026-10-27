@@ -8,10 +8,11 @@ import { ReverseModal } from "./ReverseModal";
 import { confirmDialog, promptDialog } from "../dialog";
 import { boxColor, clone, emptyDoc, normalizeDoc, normalizeLayout, snap16 } from "../lib/doc";
 import {
-  DEFAULT_QUICK, addPage, currentPage, draftLayout, flushSave, replaceCurrentDoc, setQuick, setUi, toast, useStore, type DraftOpts, type QuickAction, useWorkState } from "../store";
+  DEFAULT_QUICK, addPage, createCanvas, currentPage, draftLayout, flushSave, replaceCurrentDoc, setQuick, setUi, toast, useStore, type DraftOpts, type QuickAction, useWorkState } from "../store";
 import type { AppSettings, ArchiveItem, Doc, Revision, Skill, SkillKind } from "../types";
 import { RESOLUTIONS } from "../types";
-import { AutoTextarea, Dial, Modal, Seg, cx } from "../ui";
+import { AutoTextarea, Dial, Modal, NumField, Seg, cx } from "../ui";
+import { VIEW_PRESETS, type ViewPreset } from "../lib/solid";
 
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const fmtTime = (t?: string) => {
@@ -521,6 +522,160 @@ function DraftModal() {
   );
 }
 
+// ---------- 新建画布 ----------
+type NewPrefs = { view: string; director: boolean; table: boolean; kind: Doc["kind"] };
+const NEW_KEY = "moss.newpage.prefs";
+const loadNewPrefs = (): NewPrefs => {
+  const d: NewPrefs = { view: "eye", director: false, table: true, kind: "layout" };
+  try { return { ...d, ...(JSON.parse(localStorage.getItem(NEW_KEY) || "{}") as Partial<NewPrefs>) }; } catch { return d; }
+};
+
+/** 视角示意：侧视图里镜头相对地面上的人的位置 */
+export function ViewIcon({ v, size = 54 }: { v: ViewPreset; size?: number }) {
+  const W = 60, H = 44;
+  const gy = 38;
+  if (!v.cam) {
+    return (
+      <svg width={size} height={(size * H) / W} viewBox={`0 0 ${W} ${H}`} className="view-icon">
+        <rect x="14" y="8" width="32" height="28" rx="2" fill="none" stroke="currentColor" strokeWidth="1.4" strokeDasharray="3 2" />
+        <rect x="20" y="16" width="10" height="14" rx="1" fill="currentColor" opacity="0.35" />
+        <rect x="33" y="22" width="8" height="8" rx="1" fill="currentColor" opacity="0.25" />
+      </svg>
+    );
+  }
+  if (v.cam.orbit) {
+    // 斜侧：俯视图
+    const a = ((v.cam.orbit || 0) * Math.PI) / 180;
+    const cx = 30 + Math.sin(a) * 22, cy = 24 + Math.cos(a) * 16;
+    return (
+      <svg width={size} height={(size * H) / W} viewBox={`0 0 ${W} ${H}`} className="view-icon">
+        <rect x="24" y="12" width="12" height="9" rx="1.5" fill="currentColor" opacity="0.4" />
+        <line x1={cx} y1={cy} x2="30" y2="16.5" stroke="#f0a04b" strokeWidth="1.2" strokeDasharray="2 2" />
+        <circle cx={cx} cy={cy} r="3.4" fill="#f0a04b" />
+        <text x="30" y="42" fontSize="7" textAnchor="middle" fill="currentColor" opacity="0.6">俯视</text>
+      </svg>
+    );
+  }
+  const p = ((v.cam.pitch || 0) * Math.PI) / 180;
+  const dist = 26 * Math.max(0.55, Math.min(1.2, v.cam.distance ?? 1));
+  const tx = 34, ty = v.table ? 26 : 24;
+  const cx = tx - Math.cos(p) * dist, cy = ty - Math.sin(p) * dist;
+  return (
+    <svg width={size} height={(size * H) / W} viewBox={`0 0 ${W} ${H}`} className="view-icon">
+      <line x1="2" y1={gy} x2="58" y2={gy} stroke="currentColor" strokeWidth="1" opacity="0.5" />
+      {v.table ? (
+        <>
+          <rect x="22" y="28" width="26" height="2.5" fill="currentColor" opacity="0.55" />
+          <line x1="25" y1="30" x2="25" y2={gy} stroke="currentColor" opacity="0.45" />
+          <line x1="45" y1="30" x2="45" y2={gy} stroke="currentColor" opacity="0.45" />
+          <rect x="31" y="24.5" width="7" height="3.5" rx="1" fill="currentColor" opacity="0.7" />
+        </>
+      ) : (
+        <>
+          <circle cx={tx} cy="15" r="3" fill="currentColor" opacity="0.55" />
+          <rect x={tx - 3.5} y="18.5" width="7" height={gy - 18.5} rx="2" fill="currentColor" opacity="0.4" />
+        </>
+      )}
+      <line x1={cx} y1={cy} x2={tx} y2={ty} stroke="#f0a04b" strokeWidth="1.2" strokeDasharray="2 2" />
+      <g transform={`translate(${cx} ${cy}) rotate(${(p * 180) / Math.PI})`}>
+        <rect x="-4.5" y="-3" width="7" height="6" rx="1.2" fill="#f0a04b" />
+        <path d="M2.5 -2 L6 -3.6 L6 3.6 L2.5 2 Z" fill="#f0a04b" />
+      </g>
+    </svg>
+  );
+}
+
+function NewPageModal() {
+  const doc = useStore((s) => s.doc);
+  const pages = useStore((s) => s.series.find((x) => x.id === s.seriesId)?.pages.length ?? 0);
+  const [p, setP] = useState<NewPrefs>(loadNewPrefs);
+  const [name, setName] = useState("");
+  const [w, setW] = useState(doc?.layout.width || 1024);
+  const [h, setH] = useState(doc?.layout.height || 1536);
+  const [busy, setBusy] = useState(false);
+  const up = (x: Partial<NewPrefs>) => setP({ ...p, ...x });
+  const v = VIEW_PRESETS.find((x) => x.id === p.view) || VIEW_PRESETS[0];
+  const layout = p.kind === "layout";
+  const close = () => setUi({ modal: null });
+  const go = async () => {
+    if (busy) return;
+    setBusy(true);
+    try { localStorage.setItem(NEW_KEY, JSON.stringify(p)); } catch { /* ignore */ }
+    try {
+      await createCanvas({ name, kind: p.kind, width: snap16(w), height: snap16(h), view: layout ? v.cam : null, table: !!v.table && p.table, director: p.director && !!v.cam });
+    } catch (e) {
+      toast(`新建失败：${err(e)}`, "err");
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal title="新建画布" icon={<FilePlus2 size={16} />} onClose={close} wide
+      foot={<>
+        <span className="hint">Shift + 点「+」可跳过这一步，直接新建同尺寸空白页</span>
+        <div className="spacer" />
+        <button type="button" className="btn" onClick={close}>取消</button>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void go()}><Plus size={13} />创建</button>
+      </>}>
+      <div className="newpage-form" onKeyDown={(e) => { if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") { e.preventDefault(); void go(); } }}>
+        <div className="np-row">
+          <div className="field grow">
+            <label>名称</label>
+            <input className="input" autoFocus value={name} placeholder={`第 ${pages + 1} 页`} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>类型</label>
+            <Seg value={p.kind} onChange={(k) => up({ kind: k })} options={[
+              { v: "layout", t: "Layout 分区", title: "画框 + 每个框的描述，精确控制构图" },
+              { v: "caption", t: "Caption 散文", title: "一段完整的画面描述" },
+            ]} />
+          </div>
+        </div>
+        <div className="field">
+          <label>画幅</label>
+          <div className="np-res">
+            {RESOLUTIONS.map((r) => (
+              <button key={r.name} type="button" className={cx("chip", r.width === w && r.height === h && "accent")} onClick={() => { setW(r.width); setH(r.height); }}>
+                {r.name}<span className="num muted"> {r.width}×{r.height}</span>
+              </button>
+            ))}
+            <span className="np-custom">
+              <NumField label="宽" width={74} value={w} min={256} max={4096} onChange={(x) => setW(x)} />
+              <NumField label="高" width={74} value={h} min={256} max={4096} onChange={(x) => setH(x)} />
+            </span>
+          </div>
+        </div>
+        {layout && (
+          <div className="field">
+            <label>镜头视角<span className="hint" style={{ marginLeft: 8 }}>先定好从哪儿拍，画框时才不会被透视误导</span></label>
+            <div className="np-views">
+              {VIEW_PRESETS.map((x) => (
+                <button key={x.id} type="button" className={cx("np-view", p.view === x.id && "on")} onClick={() => up({ view: x.id })} title={x.hint}>
+                  <ViewIcon v={x} />
+                  <span>{x.name}</span>
+                </button>
+              ))}
+            </div>
+            <div className="np-view-hint">
+              <b>{v.name}</b>：{v.hint}
+              {v.cam && (v.cam.pitch || 0) >= 40 && "。在画布上画的框会当成平放在地面 / 桌面上的东西（俯视轮廓），不会变成竖起来的柱子。"}
+            </div>
+            {v.cam && (
+              <div className="draft-opts">
+                {v.table && (
+                  <label className="assist-opt"><input type="checkbox" checked={p.table} onChange={(e) => up({ table: e.target.checked })} />
+                    <span>放一张桌子当台面（1.6 × 1.0 m，之后画的东西会落在桌面上）</span></label>
+                )}
+                <label className="assist-opt"><input type="checkbox" checked={p.director} onChange={(e) => up({ director: e.target.checked })} />
+                  <span>创建后打开镜头调度，直接在 3D 场景里摆体块（按真实尺寸）</span></label>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
 export function Modals() {
   const m = useStore((s) => s.modal);
   if (m === "settings") return <SettingsModal />;
@@ -530,5 +685,6 @@ export function Modals() {
   if (m === "revisions") return <RevisionsModal />;
   if (m === "quick") return <QuickModal />;
   if (m === "draft") return <DraftModal />;
+  if (m === "newpage") return <NewPageModal />;
   return null;
 }

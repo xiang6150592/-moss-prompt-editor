@@ -46,6 +46,10 @@ export function isBaseCamera(c?: Camera | null): boolean {
 export const cameraActive = (d: LayoutDraft) => !!d.camera?.enabled;
 /** 摄像机开着且不在初始机位：画面上显示投影结果，框不能直接拖 */
 export const cameraMoved = (d: LayoutDraft) => !!d.camera?.enabled && !isBaseCamera(d.camera);
+/** 精确体块：在 3D 里按真实尺寸建的（或在镜头视图里画、改过的），投影不做“身份映射”，原框只是它在初始机位下的前脸 */
+export const isExact = (it: LayoutItem) => !!it.body?.exact && it.body.anchor === "world";
+/** 画面要显示投影结果：动过机位，或摄像机开着且有精确体块 */
+export const cameraView = (d: LayoutDraft) => cameraMoved(d) || (!!d.camera?.enabled && d.items.some((it) => !it.hidden && isExact(it)));
 
 /** 构图大小：1 = 和初始机位一样；<1 推近；>1 拉远 */
 export function framingZoom(c: Camera) {
@@ -142,7 +146,7 @@ export function estimateBodies(d: LayoutDraft, onlyMissing = false): LayoutDraft
 }
 
 // ---------- 投影 ----------
-interface Frame {
+export interface Frame {
   C: V3;
   right: V3;
   down: V3;
@@ -165,12 +169,12 @@ export function subjectItem(d: LayoutDraft): LayoutItem | null {
   return pool.reduce((a, b) => (area(b.bbox) > area(a.bbox) ? b : a));
 }
 
-function subjectZ(d: LayoutDraft): number {
+export function subjectZ(d: LayoutDraft): number {
   const s = subjectItem(d);
   return s ? bodyOf(s, d).z : 1;
 }
 
-function makeFrame(c: Camera, W: number, H: number, pivotZ: number): Frame {
+export function makeFrame(c: Camera, W: number, H: number, pivotZ: number): Frame {
   const F0 = f0(H);
   const D0 = F0 * pivotZ;
   const T: V3 = [0, 0, D0];
@@ -190,7 +194,7 @@ function makeFrame(c: Camera, W: number, H: number, pivotZ: number): Frame {
   return { C, right, down, fwd, f: H / 2 / Math.tan(rad(c.fov) / 2), W, H, near: D0 * 0.02 };
 }
 
-function project(fr: Frame, P: V3): { u: number; v: number; zc: number } | null {
+export function project(fr: Frame, P: V3): { u: number; v: number; zc: number } | null {
   const r = sub(P, fr.C);
   const zc = dot(r, fr.fwd);
   if (zc < fr.near) return null;
@@ -198,7 +202,7 @@ function project(fr: Frame, P: V3): { u: number; v: number; zc: number } | null 
 }
 
 /** 体块 8 个角点（世界坐标）。顺序：前面 0-3（左上、右上、右下、左下），后面 4-7 */
-function cubeCorners(it: LayoutItem, b: Body, W: number, H: number): { pts: V3[]; center: V3 } {
+export function cubeCorners(it: LayoutItem, b: Body, W: number, H: number): { pts: V3[]; center: V3 } {
   const F0 = f0(H);
   const [x1, y1, x2, y2] = it.bbox;
   const z = b.z;
@@ -265,17 +269,17 @@ function projectWorldItem(it: LayoutItem, b: Body, W: number, H: number, fr: Fra
   const cbBase = project(fb, center);
   const camDepth = cb ? cb.zc : -1;
   const baseDepth = cbBase ? cbBase.zc : 1;
-  if (!curOk.length || base.length < 8) {
+  if (!curOk.length || (base.length < 8 && !b.exact)) {
     return { item: { id: it.id, anchor: "world", raw: [...it.bbox] as BBox, bbox: [...it.bbox] as BBox, visible: false, partial: true, corners: null, depth: -1 }, camDepth, baseDepth };
   }
-  // 身份映射：初始机位的投影框 → 原框
-  const A = bboxOf(base);
+  // 身份映射：初始机位的投影框 → 原框（精确体块不做，直接用真实投影）
+  const A = b.exact ? [0, 0, 1, 1] : bboxOf(base);
   const [ox1, oy1, ox2, oy2] = it.bbox;
   const kx = (ox2 - ox1) / Math.max(1e-6, A[2] - A[0]);
   const ky = (oy2 - oy1) / Math.max(1e-6, A[3] - A[1]);
   const acx = (A[0] + A[2]) / 2, acy = (A[1] + A[3]) / 2;
   const ocx = (ox1 + ox2) / 2, ocy = (oy1 + oy2) / 2;
-  const map = (p: { u: number; v: number }) => ({ x: ocx + (p.u - acx) * kx, y: ocy + (p.v - acy) * ky });
+  const map = b.exact ? (p: { u: number; v: number }) => ({ x: p.u, y: p.v }) : (p: { u: number; v: number }) => ({ x: ocx + (p.u - acx) * kx, y: ocy + (p.v - acy) * ky });
   const mapped = cur.map((p) => (p ? map(p) : null));
   const okPts = mapped.filter(Boolean) as { x: number; y: number }[];
   const raw: BBox = [
@@ -369,10 +373,12 @@ export function projectLayout(d: LayoutDraft, camIn?: Camera): Projection {
 
 /** 发给编译 / Agent 的视图：摄像机关闭或在初始机位时返回 undefined */
 export function compileView(d: LayoutDraft) {
-  if (!cameraMoved(d)) return undefined;
+  if (!cameraView(d)) return undefined;
   const pr = projectLayout(d);
-  const items: Record<string, { bbox: BBox; visible: boolean }> = {};
-  for (const [id, p] of Object.entries(pr.items)) items[id] = { bbox: p.bbox.map(Math.round) as BBox, visible: p.visible };
+  const items: Record<string, { bbox: BBox; visible: boolean; partial?: boolean }> = {};
+  for (const [id, p] of Object.entries(pr.items)) {
+    items[id] = { bbox: p.bbox.map(Math.round) as BBox, visible: p.visible, ...(p.visible && p.partial ? { partial: true } : {}) };
+  }
   return { items, order: pr.order };
 }
 
@@ -393,7 +399,7 @@ export function rebaseCamera(d: LayoutDraft): LayoutDraft {
       ...it,
       bbox: p.bbox,
       hidden: it.hidden || !p.visible,
-      body: { ...b, yaw: Math.round(wrapDeg(b.yaw - cam.orbit) * 10) / 10, z: Math.round(z * 100) / 100 },
+      body: { z: Math.round(z * 100) / 100, thickness: b.thickness, yaw: Math.round(wrapDeg(b.yaw - cam.orbit) * 10) / 10, anchor: b.anchor },
     };
   });
   return { ...d, items, camera: { ...defaultCamera(), enabled: true } };
@@ -1221,10 +1227,16 @@ export function sceneData(d: LayoutDraft, camIn?: Camera): SceneData {
     const { pts, center } = cubeCorners(it, bb, W, H);
     items.push({ id: it.id, anchor: b.anchor, pts, center, body: b });
   }
-  const subj = subjectItem(d);
-  const sp = subj ? items.find((x) => x.id === subj.id) : undefined;
-  const ground = sp ? Math.max(...sp.pts.map((p) => p[1])) : H / 2;
+  const ground = groundY(d);
   return { items, frame: fr, base: fb, pivot, D0, F0, ground, planeDepth, meter: sceneMeter(d) };
+}
+
+/** 地面高度（世界 y，向下为正）：主体的底边；没有 3D 体块时在镜头下方 1.5 米（画布高度的一半） */
+export function groundY(d: LayoutDraft): number {
+  const s = subjectItem(d);
+  if (!s) return d.height / 2;
+  const { pts } = cubeCorners(s, bodyOf(s, d), d.width, d.height);
+  return Math.max(...pts.map((p) => p[1]));
 }
 
 /** 体块的世界尺寸（宽、高、厚，世界单位）和底面中心 */

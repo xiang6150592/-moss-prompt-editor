@@ -3,7 +3,8 @@
  */
 import { Box, ChevronDown, Eye, Lightbulb, Magnet, Plus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { bodyMetrics, bodyOf, moveTargets, resizeBody, sceneData, sceneMeter, translateItems, wrapDeg } from "../lib/camera";
+import { bodyMetrics, bodyOf, isExact, moveTargets, sceneData, sceneMeter, translateItems, wrapDeg } from "../lib/camera";
+import { SIZE_PRESETS, dropSolid, sizeGuess, solidOf, supportAt, type SizePreset } from "../lib/solid";
 import { boxColor, itemName } from "../lib/doc";
 import {
   KELVIN_STEPS, LIGHT_EXTRAS, LIGHT_PRESETS, LIGHT_SWATCHES, ROLES, ROLE_ORDER, fromRel, kelvinHex, kelvinRgb, lightRgb, lightingPhrase, newLight,
@@ -11,11 +12,11 @@ import {
 } from "../lib/lighting";
 import {
   DEFAULT_QUICK, applyLightingPreset, applyMove, bringIntoFrame, editLayout, reestimateBodies, select, send, setLighting, setLightingFollow, toast,
-  updateItem, useStore,
+  updateItem, updateSolid, useStore,
 } from "../store";
 import type { Anchor, Camera, LayoutDraft, Light, LightRole, Lighting } from "../types";
 import { LABEL_TEXT } from "../types";
-import { Dial, MenuItem, Popover, Seg, Switch, cx, useAnchor } from "../ui";
+import { AutoTextarea, DecField, Dial, MenuItem, Popover, Seg, Switch, cx, useAnchor } from "../ui";
 
 // ---------------- 被灯照亮的球 ----------------
 type Rel = ReturnType<typeof relLights>[number] | ReturnType<typeof presetRel>[number];
@@ -295,38 +296,6 @@ export function LightingPanel({ L, cam, active, setActive, onSent }: {
 }
 
 // ---------------- 体块 ----------------
-function DecField({ label, value, onChange, step = 0.1, digits = 2, unit, disabled, title }: {
-  label: string; value: number; onChange: (v: number) => void; step?: number; digits?: number; unit?: string; disabled?: boolean; title?: string;
-}) {
-  const fmt = (v: number) => (Number.isFinite(v) ? v.toFixed(digits) : "—");
-  const [v, setV] = useState(fmt(value));
-  const [focus, setFocus] = useState(false);
-  useEffect(() => { if (!focus) setV(fmt(value)); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [value, focus]);
-  const commit = () => {
-    const n = parseFloat(v);
-    if (Number.isFinite(n) && Math.abs(n - value) > 1e-9) onChange(n);
-    else setV(fmt(value));
-  };
-  return (
-    <label className={cx("decfield", disabled && "disabled")} title={title}>
-      <span>{label}</span>
-      <input className="input input-sm num" value={v} disabled={disabled}
-        onFocus={() => setFocus(true)} onBlur={() => { setFocus(false); commit(); }}
-        onChange={(e) => setV(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-            e.preventDefault();
-            const n = (parseFloat(v) || 0) + (e.key === "ArrowUp" ? 1 : -1) * step * (e.shiftKey ? 10 : 1);
-            setV(fmt(n));
-            onChange(n);
-          }
-        }} />
-      {unit && <em>{unit}</em>}
-    </label>
-  );
-}
-
 export function BodyPanel({ L, cam, selection, onFrame }: { L: LayoutDraft; cam: Camera; selection: string[]; onFrame: (id: string) => void }) {
   const id = selection.find((x) => L.items.some((it) => it.id === x)) || null;
   const k = id ? L.items.findIndex((x) => x.id === id) : -1;
@@ -334,6 +303,7 @@ export function BodyPanel({ L, cam, selection, onFrame }: { L: LayoutDraft; cam:
   const sd = useMemo(() => sceneData(L, cam), [L, cam]);
   const m = sceneMeter(L);
   const hold = useStore((s) => s.moveHold);
+  const presets = useAnchor();
   const list = (
     <div className="dir-list bd-list">
       {L.items.map((x, i) => {
@@ -376,16 +346,31 @@ export function BodyPanel({ L, cam, selection, onFrame }: { L: LayoutDraft; cam:
     if (!t.ids.length) return toast(t.pinned ? "锁定的框（或组里有锁定的框）不能移动" : "不能移动");
     const r = translateItems(L, t.ids, T, hold);
     if (!r) return toast("移不到那里（太近或太远）");
-    applyMove(r, "");
+    applyMove(r, `bd-pos-${it.id}`);
   };
   const setAnchor = (a: Anchor) => {
     if (a === b.anchor) return;
-    updateItem(it.id, { body: { ...b, anchor: a, ...(a === "backdrop" ? { z: Math.max(b.z, 4), thickness: 0 } : {}) } });
+    updateItem(it.id, { body: { ...b, anchor: a, exact: undefined, ...(a === "backdrop" ? { z: Math.max(b.z, 4), thickness: 0 } : {}) } });
   };
   const ground = sd.ground;
   const X = mt ? mt.center[0] / m : 0;
   const Y = mt ? (ground - mt.bottom) / m : 0;
   const Z = mt ? mt.center[2] / m : 0;
+  const exact = isExact(it);
+  const so = world ? solidOf(it, L) : null;
+  // 改尺寸：底面、占地中心不动（变成按真实尺寸的实体）
+  const setSize = (patch: { w?: number; h?: number; t?: number }) => so && updateSolid(it.id, { ...so, ...patch }, `bd-size-${it.id}`);
+  const usePreset = (p: SizePreset) => {
+    if (!so) return;
+    const s1 = { ...so, w: p.w * m, h: p.h * m, t: p.t * m };
+    updateSolid(it.id, dropSolid(L, it.id, s1), "", !it.name ? { name: p.name } : undefined);
+  };
+  const guess = world ? sizeGuess(it.name || "", it.caption) : null;
+  const guessOff = !!guess && !!so && [guess.w * m - so.w, guess.h * m - so.h, guess.t * m - so.t].some((d, i) => Math.abs(d) > 0.08 * [guess.w, guess.h, guess.t][i] * m)
+    && !(Math.abs(guess.w * m - so.t) < 0.08 * guess.w * m && Math.abs(guess.t * m - so.w) < 0.08 * guess.t * m && Math.abs(guess.h * m - so.h) < 0.08 * guess.h * m);
+  const sup = so ? supportAt(L, so.cx, so.cz, new Set([it.id]), so.bottom) : null;
+  const floating = !!so && !!sup && Math.abs(sup.y - so.bottom) > m * 0.01;
+  const supName = sup?.id ? (() => { const j = L.items.findIndex((x) => x.id === sup.id); return j >= 0 ? itemName(L.items[j], j) : ""; })() : "";
   return (
     <>
       <section className="dir-sec">
@@ -394,16 +379,24 @@ export function BodyPanel({ L, cam, selection, onFrame }: { L: LayoutDraft; cam:
           <span className="bd-no num">{k + 1}</span>
           <span className="section-title ellipsis">{itemName(it, k)}</span>
           <span className="muted">{LABEL_TEXT[it.label]}</span>
+          {world && <span className={cx("chip", exact && "warm")} title={exact ? "按真实尺寸建的实体：画面里看到的是它在镜头里的真实投影" : "按框的位置估算的体块：改一次尺寸就会变成实体"}>{exact ? "实体" : "估算"}</span>}
           <div className="spacer" />
           {world && <button type="button" className="btn btn-ghost btn-xs btn-icon" title="取景到它（动机位）" onClick={() => onFrame(it.id)}><Eye size={12} /></button>}
           {world && !it.locked && <button type="button" className="btn btn-ghost btn-xs btn-icon" title="拉回画面（镜头不动）" onClick={() => bringIntoFrame(it.id)}><Magnet size={12} /></button>}
+        </div>
+        <div className="bd-meta">
+          <input className="input input-sm" value={it.name || ""} placeholder={`名称（例如：${it.label === "character" ? "女孩" : "木桌"}）`} disabled={!!it.locked}
+            onChange={(e) => updateItem(it.id, { name: e.target.value || undefined }, `name-${it.id}`)} />
+          <AutoTextarea className="textarea input-sm" minRows={1} maxRows={5} value={it.caption} disabled={!!it.locked}
+            placeholder={it.label === "character" ? "描述：外貌、服装、姿态……" : "描述：外观、材质、颜色……"}
+            onChange={(e) => updateItem(it.id, { caption: e.target.value }, `cap-${it.id}`)} />
         </div>
         <Seg small full value={b.anchor} onChange={setAnchor} options={[
           { v: "world", t: "3D 体块", title: "放在场景里，随机位产生透视、遮挡变化" },
           { v: "backdrop", t: "背景板", title: "很远的背景（天空、街景）：转机位时只平移、不变形" },
           { v: "screen", t: "贴屏", title: "贴在画面上（文字、标志）：不随机位变化" },
         ]} />
-        {world && mt ? (
+        {world && mt && so ? (
           <>
             <div className="bd-grp-title">位置<span className="muted">单位：米（按画面高度换算）{group > 1 ? ` · 整组 ${group} 个一起移动` : ""}</span></div>
             <div className="bd-grid">
@@ -411,11 +404,34 @@ export function BodyPanel({ L, cam, selection, onFrame }: { L: LayoutDraft; cam:
               <DecField label="离地" title="底边离地面的高度（地面 = 主体脚下）" value={Y} unit="m" disabled={!!it.locked} onChange={(v) => move([0, -(v - Y) * m, 0])} />
               <DecField label="Z" title="远近（离初始机位的距离）" value={Z} unit="m" disabled={!!it.locked} onChange={(v) => move([0, 0, (v - Z) * m])} />
             </div>
-            <div className="bd-grp-title">尺寸</div>
+            {(floating || supName) && (
+              <div className="bd-support">
+                <span className="muted">{floating ? `悬空 ${((sup!.y - so.bottom) / m).toFixed(2)} m` : `放在「${supName}」上`}</span>
+                <div className="spacer" />
+                {floating && <button type="button" className="btn btn-xs" disabled={!!it.locked} title="落到下面最近的地面或桌面上（G）" onClick={() => updateSolid(it.id, dropSolid(L, it.id, so), "")}>落地</button>}
+              </div>
+            )}
+            <div className="bd-grp-title">尺寸<span className="muted">底面和占地中心不动</span></div>
             <div className="bd-grid">
-              <DecField label="宽" value={mt.w / m} unit="m" disabled={!!it.locked} onChange={(v) => v > 0.01 && updateItem(it.id, resizeBody(it, L, { w: v * m }))} />
-              <DecField label="高" title="改高度时底边不动" value={mt.h / m} unit="m" disabled={!!it.locked} onChange={(v) => v > 0.01 && updateItem(it.id, resizeBody(it, L, { h: v * m }))} />
-              <DecField label="厚" value={mt.t / m} unit="m" disabled={!!it.locked} onChange={(v) => v >= 0 && updateItem(it.id, resizeBody(it, L, { t: v * m }))} />
+              <DecField label="宽" title="左右方向" value={so.w / m} unit="m" min={0.01} disabled={!!it.locked} onChange={(v) => v > 0 && setSize({ w: v * m })} />
+              <DecField label="高" title="改高度时底面不动" value={so.h / m} unit="m" min={0.01} disabled={!!it.locked} onChange={(v) => v > 0 && setSize({ h: v * m })} />
+              <DecField label={it.label === "character" ? "厚" : "长"} title="前后方向（纵深）" value={so.t / m} unit="m" min={0.01} disabled={!!it.locked} onChange={(v) => v > 0 && setSize({ t: v * m })} />
+            </div>
+            <div className="bd-presets">
+              {guess && guessOff && (
+                <button type="button" className="btn btn-xs btn-warm" disabled={!!it.locked} onClick={() => usePreset(guess)} title="按名称 / 描述套用常见尺寸（并落到下面的支撑面上）">
+                  套用「{guess.name}」{guess.w}×{guess.h}×{guess.t} m
+                </button>
+              )}
+              <button ref={presets.ref} type="button" className="btn btn-xs" disabled={!!it.locked} onClick={presets.toggle}>常见尺寸<ChevronDown size={11} /></button>
+              <Popover anchor={presets.ref.current} open={presets.open} onClose={presets.close} width={250}>
+                <div className="menu-label">宽 × 高 × 长（米）</div>
+                <div className="size-menu">
+                  {SIZE_PRESETS.filter((p) => (p.label === "character") === (it.label === "character")).map((p) => (
+                    <MenuItem key={p.name} meta={<span className="num">{p.w}×{p.h}×{p.t}</span>} onClick={() => { presets.close(); usePreset(p); }}>{p.name}</MenuItem>
+                  ))}
+                </div>
+              </Popover>
             </div>
             <Dial warm label="朝向" title="绕竖直轴转：0 = 正对初始机位，正 = 向画面右侧转" value={b.yaw} min={-180} max={180} step={1} unit="°" zero={0}
               disabled={!!it.locked} onChange={(v) => updateItem(it.id, { body: { ...b, yaw: v } }, `bd-yaw-${it.id}`)} onReset={() => updateItem(it.id, { body: { ...b, yaw: 0 } })} />
